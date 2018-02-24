@@ -1,0 +1,465 @@
+C51 COMPILER V9.56.0.0   KEY                                                               12/17/2017 18:43:26 PAGE 1   
+
+
+C51 COMPILER V9.56.0.0, COMPILATION OF MODULE KEY
+OBJECT MODULE PLACED IN .\Objects\key.obj
+COMPILER INVOKED BY: E:\Keil\C51\BIN\C51.EXE code\key.c LARGE OPTIMIZE(8,SPEED) BROWSE DEBUG OBJECTEXTEND PRINT(.\Listin
+                    -gs\key.lst) TABS(2) OBJECT(.\Objects\key.obj)
+
+line level    source
+
+   1          #include "gheader.h"
+   2          
+   3          
+   4          /*
+   5          ********************************************************************************
+   6          *   定义键盘状态机的状态
+   7          ********************************************************************************
+   8          */
+   9          #define KEY_STATE_UP          1      /* Key scanning states used in KeyScan()                   */
+  10          #define KEY_STATE_DEBOUNCE        2
+  11          #define KEY_STATE_RPT_START_DLY   3
+  12          #define KEY_STATE_RPT_DLY       4
+  13          
+  14          /*
+  15          ********************************************************************************
+  16          *   键盘模块所使用的静态变量
+  17          ********************************************************************************
+  18          */
+  19          static uint8    KeyBuf[KEY_BUF_SIZE];
+  20          static uint8  KeyBufInLx;
+  21          static uint8  KeyBufOutLx;
+  22          static uint8  KeyScanState;
+  23          static uint8  KeyRptStartDlyCtr;
+  24          static uint8  KeyRptDlyCtr;
+  25          static uint16   KeyDownTmr;
+  26          
+  27          
+  28          /*
+  29          ********************************************************************************
+  30          *   键盘模块的全局变量定义
+  31          ********************************************************************************
+  32          */
+  33          bit Flg_KeyLock=0;
+  34          bit Flg_KeyOnePress = 0;
+  35          uint8 IR_RptCount;
+  36          
+  37          /*
+  38          ********************************************************************************
+  39          *   键盘模块所使用的静态功能函数定义
+  40          ********************************************************************************
+  41          */
+  42           void KeyBufIn(u8 key);
+  43          static u8 KeyGetKeyCode(void);
+  44          static u8 KeyIsDown(void);
+  45          
+  46          
+  47          /*
+  48          ********************************************************************************  
+  49          *   函 数 名: KeyBufIn
+  50          *   功能描述: 按键代码放入到键盘缓冲区中
+  51          *   输    入: key :按键的代码
+  52          *   返    回: 无
+  53          ********************************************************************************
+  54          */
+C51 COMPILER V9.56.0.0   KEY                                                               12/17/2017 18:43:26 PAGE 2   
+
+  55           void KeyBufIn(u8 key)
+  56          {
+  57   1        u8 tmp;
+  58   1        tmp = KeyBufInLx + 1;
+  59   1        if (tmp == KEY_BUF_SIZE) tmp = 0;
+  60   1        if (tmp == KeyBufOutLx)  return;    //如果尾指针加1以后等于头指针，则表示命令队列已满
+  61   1        KeyBufInLx = tmp;
+  62   1        KeyBuf[KeyBufInLx] = key;
+  63   1      }
+  64          
+  65          /*
+  66          ********************************************************************************  
+  67          *   函 数 名: KeyIsDown
+  68          *   功能描述: 判断有没有按键按下去
+  69          *   输    入: 无
+  70          *   返    回: 0   : 没有按键按下
+  71          *             1   : 有按键按下
+  72          ********************************************************************************
+  73          */
+  74          static u8 KeyIsDown(void)
+  75          {
+  76   1        if (KeyGetKeyCode() == KEYCODE_NOPRESS)  {
+  77   2          Flg_KeyOnePress = 0;
+  78   2          return 0;
+  79   2          }
+  80   1        
+  81   1        else  {
+  82   2          if (KeyDownTmr < 0xFFFF)  KeyDownTmr++;
+  83   2          return 1;
+  84   2          }
+  85   1      }
+  86          
+  87          /*
+  88          *************************************************************************
+  89          设计    liwei
+  90          文件    ADC_Init
+  91          功能    主函数入口
+  92          *************************************************************************
+  93          */
+  94          
+  95          void ADC_Init(void)
+  96          {
+  97   1      
+  98   1      
+  99   1        GPIOB6_PIN_OE=1;
+ 100   1        GPIOB6_PIN_PHN=1;
+ 101   1        rGPIOB_FUN1|=0x30;  // B6设置为ADC 输出
+ 102   1      
+ 103   1      
+ 104   1      
+ 105   1        GPIOB5_PIN_OE=1;
+ 106   1        GPIOB5_PIN_PHN=1;
+ 107   1        rGPIOB_FUN1|=0x0c;  // B5设置为ADC 输出
+ 108   1      
+ 109   1      
+ 110   1      
+ 111   1        GPIOB4_PIN_OE=1;
+ 112   1        GPIOB4_PIN_PHN=1;
+ 113   1        rGPIOB_FUN1|=0x03;  // B4设置为ADC 输出
+ 114   1      
+ 115   1      
+ 116   1        GPIOB3_PIN_OE=1;
+C51 COMPILER V9.56.0.0   KEY                                                               12/17/2017 18:43:26 PAGE 3   
+
+ 117   1        GPIOB3_PIN_PHN=1;
+ 118   1        rGPIOB_FUN2|=0xc0;  // B3设置为ADC 输出
+ 119   1      
+ 120   1      
+ 121   1        GPIOB2_PIN_OE=1;
+ 122   1        GPIOB2_PIN_PHN=1;
+ 123   1        rGPIOB_FUN2|=0x30;  // B2设置为ADC 输出
+ 124   1      
+ 125   1        GPIOB1_PIN_OE=1;
+ 126   1        GPIOB1_PIN_PHN=1;
+ 127   1        rGPIOB_FUN2|=0x0c;  // B1设置为VREF ADC 参考电压
+ 128   1      
+ 129   1      
+ 130   1        GPIOB0_PIN_OE=1;
+ 131   1        GPIOB0_PIN_PHN=1;
+ 132   1        rGPIOB_FUN2|=0x03;  // B0设置为ADC 输出
+ 133   1      
+ 134   1        GPIOA7_PIN_OE=1;
+ 135   1        GPIOA7_PIN_PHN=1;
+ 136   1        rGPIOA_FUN1|=0xc0;  //A7设置为ADC 输出
+ 137   1      
+ 138   1        
+ 139   1        rADC_CTL = 0x80;      // 连续转换模式
+ 140   1        //ADC converter speed 125KHz
+ 141   1        rADC_SEL = 0x80 +VREF_FROM_VDD;
+ 142   1        //Select AD Channel
+ 143   1        //rADC_ENCH = ADC_CH1;    //Select ADC channe 
+ 144   1        
+ 145   1        //Enable ADC power
+ 146   1        //rADC_CTL &= 0x7F;     //Enable low speed adc(bit7=0)  
+ 147   1      
+ 148   1        Delayms(1);
+ 149   1      
+ 150   1      
+ 151   1        //Enable Continuous mode
+ 152   1        //rADC_CTL |= 0x20;     
+ 153   1      }
+ 154          
+ 155          
+ 156          WORD DRV_ReadAnalogChannel(BYTE AD_Channel)
+ 157          {
+ 158   1        WORD AdcWdata;
+ 159   1        BYTE AdcBdata; 
+ 160   1        
+ 161   1        //rADC_SEL = 0x80;
+ 162   1        rADC_SEL = 0x80 + 0;//VREF_FROM_AREF;//VREF_FROM_VDD;
+ 163   1      
+ 164   1      
+ 165   1        
+ 166   1        rADC_ENCH = AD_Channel;   //Select ADC channe 
+ 167   1        //rADC_TMPS &= 0xFE;      //Disable EN_ADC_TMPS
+ 168   1        //select VerF
+ 169   1        //rADC_VREF = VREF_FROM_VDD;
+ 170   1        rADC_CTL &= 0x7F;     //Enable low speed adc(bit7=0)  
+ 171   1        _nop_();
+ 172   1        rADC_CTL |= 0x40;     //=1:Start ADC converter
+ 173   1        do
+ 174   1        {
+ 175   2        _nop_();
+ 176   2        }
+ 177   1        while(rADC_CTL & 0x40); //1=>0:convert finish
+ 178   1        AdcWdata = 0;
+C51 COMPILER V9.56.0.0   KEY                                                               12/17/2017 18:43:26 PAGE 4   
+
+ 179   1        #if 0
+                //For ADC Tool
+                PMCTL_DATA[7] = AD_Channel;
+                PMCTL_DATA[8] = rADC_DATAH;
+                PMCTL_DATA[9] = rADC_DATAL & 0x0F;
+                #endif
+ 185   1        AdcBdata = rADC_DATAL;
+ 186   1        AdcBdata = AdcBdata & 0x0F;
+ 187   1        AdcWdata = rADC_DATAH;
+ 188   1        AdcWdata = AdcWdata << 4;
+ 189   1        AdcWdata = AdcWdata + AdcBdata;
+ 190   1      
+ 191   1      
+ 192   1        //DRV_Printf("Show rADC_DATAH = %d \r\n",rADC_DATAH);
+ 193   1        //DRV_Printf("Show rADC_DATAL = %d \r\n",rADC_DATAL); 
+ 194   1        return AdcWdata;    
+ 195   1      }
+ 196          
+ 197          
+ 198          WORD API_AverageADCData(BYTE ADC_Channel)
+ 199          {
+ 200   1      #define ADC_SUM_TIME    16  
+ 201   1      #define ADC_SORTING_SIZE  0x03  
+ 202   1        
+ 203   1      BYTE R7;
+ 204   1      
+ 205   1      WORD ADC_TotalData;
+ 206   1      
+ 207   1        ADC_TotalData = 0;
+ 208   1        for(R7=0;R7<ADC_SUM_TIME;R7++)
+ 209   1        {   
+ 210   2          //Delay(10);
+ 211   2          ADC_TotalData = ADC_TotalData + DRV_ReadAnalogChannel(ADC_Channel); 
+ 212   2        }
+ 213   1        ADC_TotalData = ADC_TotalData / ADC_SUM_TIME; 
+ 214   1        return ADC_TotalData;
+ 215   1      
+ 216   1      }
+ 217          
+ 218          
+ 219          
+ 220          
+ 221          
+ 222          
+ 223          
+ 224          
+ 225          
+ 226          
+ 227          /*
+ 228          ********************************************************************************  
+ 229          *   函 数 名    : KeyGetKeyCode
+ 230          *   功能描述  : 通过ADC值确定按的那个功能按键
+ 231          *   输    入    : 无
+ 232          *   返    回    : 按键码
+ 233          *                   
+ 234          ********************************************************************************
+ 235          */
+ 236          //#define EN_DEBUG_MSG
+ 237          
+ 238          u8 KeyGetKeyCode(void)
+ 239          {
+ 240   1      
+C51 COMPILER V9.56.0.0   KEY                                                               12/17/2017 18:43:26 PAGE 5   
+
+ 241   1          if(GPIOA1_PIN==0)
+ 242   1            {
+ 243   2              return  KEYCODE_VOLDOWN;
+ 244   2            }
+ 245   1          else if(GPIOA2_PIN==0)
+ 246   1            {
+ 247   2              return  KEYCODE_VOLUP;
+ 248   2            }
+ 249   1          else if(GPIOA3_PIN==0)
+ 250   1            {
+ 251   2              return  KEYCODE_MUTE;
+ 252   2            }
+ 253   1          else
+ 254   1            {
+ 255   2              return KEYCODE_NOPRESS;
+ 256   2            }
+ 257   1            
+ 258   1      
+ 259   1      
+ 260   1      #if 0 
+                     u8 i=0,keytemp;
+                uint16 KeyIn0;
+              //  KeyIn2 = GetADCValue(ADC_CH2);
+                KeyIn0= GetADCValue(ADC_CH0);
+                #if defined(EN_DEBUG_MSG)
+                
+                if(KeyIn0>0)
+                Printf("\r\nKeyIn0 ADC Value is: %02bx", (u8)(KeyIn0>>4) );
+              
+                #endif
+                
+                if ((KeyIn0<10)) return    KEYCODE_NOPRESS;
+              
+              
+                keytemp=(u8)(KeyIn0>>4);
+                for (i = 0; i < sizeof(KeycodeArry0); i++)  {
+                if ((keytemp >= KeycodeArry0[i][0]) && (keytemp <= KeycodeArry0[i][1]))
+                break;
+                } 
+                if (i >= 6) return   KEYCODE_NOPRESS;
+                else return  KeycodeArry0[i][2];
+              
+              #endif
+ 284   1          
+ 285   1      
+ 286   1        }
+ 287          
+ 288          /*
+ 289          ********************************************************************************  
+ 290          *   函 数 名: KeyGetKey
+ 291          *   功能描述: 从键盘缓冲区中读按键代码，如果缓冲区是空则返回0xff
+ 292          *   输    入: 无
+ 293          *   返    回: 按键的代码
+ 294          ********************************************************************************
+ 295          */
+ 296          uint8 KeyGetKey(void)
+ 297          {
+ 298   1        if (KeyBufOutLx == KeyBufInLx )  return 0xFF;
+ 299   1        KeyBufOutLx++;
+ 300   1        if (KeyBufOutLx == KEY_BUF_SIZE)  KeyBufOutLx = 0;
+ 301   1        return KeyBuf[KeyBufOutLx];
+ 302   1      }
+C51 COMPILER V9.56.0.0   KEY                                                               12/17/2017 18:43:26 PAGE 6   
+
+ 303          
+ 304          
+ 305          
+ 306          
+ 307          /*
+ 308          ********************************************************************************  
+ 309          *   函 数 名: KeyInit
+ 310          *   功能描述: 键盘模块初始化，要正确使用键盘模块的功能，要首先调用初始化
+ 311          *   输    入: 无
+ 312          *   返    回: 0   : 键盘缓冲区中没有按键
+ 313          *             1   : 键盘缓冲区中有按键
+ 314          ********************************************************************************
+ 315          */
+ 316          void KeyInit(void)
+ 317          {
+ 318   1        uint8 i;
+ 319   1        
+ 320   1        KeyBufInLx    = KEY_BUF_SIZE - 1;
+ 321   1        KeyBufOutLx   = KEY_BUF_SIZE - 1;
+ 322   1        KeyScanState  = KEY_STATE_UP;
+ 323   1        KeyDownTmr  = 0;
+ 324   1        //IrAckCount  = 0;
+ 325   1        for (i=0; i< KEY_BUF_SIZE; i++) KeyBuf[i] = 0xFF;
+ 326   1        Flg_KeyLock   = 0;
+ 327   1      }
+ 328          /*
+ 329          ********************************************************************************  
+ 330          *   函 数 名: KeyHit
+ 331          *   功能描述: 应用程序调用该函数判断键盘缓冲区有无按键
+ 332          *   输    入: 无
+ 333          *   返    回: 无
+ 334          ********************************************************************************
+ 335          */
+ 336          bit KeyHit(void)
+ 337          {
+ 338   1        if (KeyBufOutLx == KeyBufInLx )  return 0;
+ 339   1        else  return 1;
+ 340   1      }
+ 341          
+ 342          
+ 343          
+ 344          /*
+ 345          ********************************************************************************  
+ 346          *   函 数 名: KeyGetKeyDownTime
+ 347          *   功能描述: 返回按键按下去的时间，这个时间是扫描时间间隔的计数值
+ 348          *   输    入: 无
+ 349          *   返    回: 按键按下去的时间
+ 350          ********************************************************************************
+ 351          */
+ 352          uint16 KeyGetKeyDownTime(void)
+ 353          {
+ 354   1        return KeyDownTmr;
+ 355   1      }
+ 356          
+ 357          void KeyDownTimeClear(void)
+ 358          {
+ 359   1        KeyDownTmr = 0;
+ 360   1      }
+ 361          
+ 362          
+ 363          
+ 364          /*
+C51 COMPILER V9.56.0.0   KEY                                                               12/17/2017 18:43:26 PAGE 7   
+
+ 365          ********************************************************************************  
+ 366          *   函 数 名: KeyScan
+ 367          *   功能描述: 这是整个键盘模块的核心，完成整个键盘状态机的处理
+ 368          *   输    入: 无
+ 369          *   返    回: 按键按下去的时间
+ 370          ********************************************************************************
+ 371          */
+ 372          void KeyScan(void)
+ 373          {
+ 374   1        if (Flg_KeyLock)  return;           // 按键被锁定，不进行任何处理
+ 375   1        
+ 376   1        switch (KeyScanState)  {
+ 377   2          case  KEY_STATE_UP:             // 按键没有按下，要查看有没有按键
+ 378   2            if (KeyIsDown())  {           // 检查是否有按键按下
+ 379   3              IR_RptCount = 0;
+ 380   3              KeyScanState = KEY_STATE_DEBOUNCE;  // 有按键按下，改变按键扫描的状态
+ 381   3              //KeyDownTmr = 0;         // 按键按下的时间清零
+ 382   3              }
+ 383   2            KeyDownTmr = 0;
+ 384   2            break;
+ 385   2      
+ 386   2          case  KEY_STATE_DEBOUNCE:         // 按键已按下，获取扫描码，放入缓冲区
+ 387   2            if (KeyIsDown())  {           // 检查是否有按键按下
+ 388   3              KeyBufIn(KeyGetKeyCode());      // 获取扫描码，并放入缓冲区
+ 389   3              KeyRptStartDlyCtr = KEY_RPT_START_DLY;  // 启动自动重复功能
+ 390   3              KeyScanState = KEY_STATE_RPT_START_DLY; // 转换按键扫描状态
+ 391   3              }
+ 392   2      
+ 393   2            else  KeyScanState = KEY_STATE_UP;    // 没有键按下，改变按键扫描状态
+ 394   2            break;
+ 395   2      
+ 396   2          case  KEY_STATE_RPT_START_DLY:        // 等待启动自动重复
+ 397   2            if (KeyIsDown())  {         // 检查按键是否一直按着
+ 398   3              if (KeyRptStartDlyCtr)  {     // 检查是否需要延时
+ 399   4                KeyRptStartDlyCtr--;
+ 400   4                if (KeyRptStartDlyCtr == 0)  {  // 检查延时时间到了没有
+ 401   5                  KeyBufIn(KeyGetKeyCode());
+ 402   5                  KeyRptDlyCtr = KEY_RPT_DLY; // 设置下一次重复的延时间隔
+ 403   5                  KeyScanState = KEY_STATE_RPT_DLY;
+ 404   5                  }
+ 405   4                }
+ 406   3              }
+ 407   2            
+ 408   2            else  KeyScanState = KEY_STATE_DEBOUNCE;  // 键没有按下，改变扫描状态
+ 409   2            break;
+ 410   2      
+ 411   2          case  KEY_STATE_RPT_DLY:          // 等待下一次重复
+ 412   2            if (KeyIsDown())  {           // 检查按键是否一直按着
+ 413   3              if (KeyRptDlyCtr)  {        // 检查是否需要延时
+ 414   4                KeyRptDlyCtr--;
+ 415   4                if (KeyRptDlyCtr == 0)  {   // 检查延时时间到了没有
+ 416   5                  KeyBufIn(KeyGetKeyCode());
+ 417   5                  KeyRptDlyCtr = KEY_RPT_DLY; // 设置下一次重复的延时间隔
+ 418   5                  }
+ 419   4                }
+ 420   3              }
+ 421   2      
+ 422   2            else  KeyScanState = KEY_STATE_DEBOUNCE;  // 键没有按下，改变扫描状态
+ 423   2            break;
+ 424   2          }
+ 425   1      }
+ 426          
+C51 COMPILER V9.56.0.0   KEY                                                               12/17/2017 18:43:26 PAGE 8   
+
+ 427          
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =    629    ----
+   CONSTANT SIZE    =   ----    ----
+   XDATA SIZE       =     18    ----
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =   ----    ----
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =      2    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

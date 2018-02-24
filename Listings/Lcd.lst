@@ -1,0 +1,826 @@
+C51 COMPILER V9.56.0.0   LCD                                                               12/17/2017 17:53:42 PAGE 1   
+
+
+C51 COMPILER V9.56.0.0, COMPILATION OF MODULE LCD
+OBJECT MODULE PLACED IN .\Objects\Lcd.obj
+COMPILER INVOKED BY: E:\Keil\C51\BIN\C51.EXE code\Lcd.c LARGE OPTIMIZE(8,SPEED) BROWSE DEBUG OBJECTEXTEND PRINT(.\Listin
+                    -gs\Lcd.lst) TABS(2) OBJECT(.\Objects\Lcd.obj)
+
+line level    source
+
+   1          #include "gheader.h"
+   2          /*
+   3          *************************************************************************
+   4          设计    liwei
+   5          文件    LCD
+   6          功能    LCD的配置和使用函数
+   7                    我们使用了56F216的A模式lcd驱动
+   8          
+   9          LCD 建模
+  10               A
+  11           F       B
+  12               G
+  13           E       C
+  14               D
+  15                    
+  16          *************************************************************************
+  17          */
+  18          
+  19          u8  DispNum[8];   /*10个数字电压的十位只有2段但也用一个数字表示*/
+  20          u8 idata DispBuff[19]=0; /*显示buff这里有19个字节*/
+  21          union FlageGrup Uicon[3]=0;
+  22          
+  23          DATA u8 Effe=0;
+  24          DATA u8 usb1V=0,usb1A=0,usb2V=0,usb2A=0;
+  25          
+  26          
+  27          BYTE code DIGIT_CODE[]={
+  28            
+  29            SEG_A|SEG_B|SEG_C|SEG_D|SEG_E|SEG_F,               // '0'
+  30            SEG_B|SEG_C,                                   // '1'
+  31            SEG_A|SEG_B|SEG_D|SEG_E|SEG_G,                  // '2'
+  32            SEG_A|SEG_B|SEG_C|SEG_D|SEG_G,                  // '3'
+  33            SEG_B|SEG_C|SEG_F|SEG_G,                    // '4'
+  34            SEG_A|SEG_C|SEG_D|SEG_F|SEG_G,                // '5'
+  35            SEG_A|SEG_C|SEG_D|SEG_E|SEG_F|SEG_G,          // '6'
+  36            SEG_A|SEG_B|SEG_C|SEG_F,                      // '7'
+  37            SEG_A|SEG_B|SEG_C|SEG_D|SEG_E|SEG_F|SEG_G,        // '8'
+  38            SEG_A|SEG_B|SEG_C|SEG_D|SEG_F|SEG_G,          // '9'
+  39            /*10_31*/
+  40            0,0,0,0,0,0,0,0,0,0,
+  41            0,0,0,0,0,0,0,0,0,0,
+  42            0,0,
+  43            0x00,                                                   /*空白*/
+  44            
+  45            SEG_A|SEG_I|SEG_K|SEG_M,                // '!'
+  46            SEG_B|SEG_J,                      // '"'
+  47            SEG_D|SEG_E|SEG_F|SEG_J|SEG_G|SEG_H|SEG_M,        // '#'
+  48            SEG_D|SEG_E|SEG_F|SEG_J|SEG_G|SEG_M,          // 'o'
+  49            SEG_C|SEG_F|SEG_K|SEG_L,                // '%'
+  50            SEG_A|SEG_C|SEG_D|SEG_E|SEG_I|SEG_K|SEG_G|SEG_N,    // '&'
+  51            SEG_K,                          // '''
+  52            SEG_K|SEG_N,                      // '('
+  53            SEG_I|SEG_L,                      // ')'
+  54            SEG_I|SEG_J|SEG_K|SEG_G|SEG_H|SEG_L|SEG_M|SEG_N,    // '*'
+C51 COMPILER V9.56.0.0   LCD                                                               12/17/2017 17:53:42 PAGE 2   
+
+  55            SEG_J|SEG_G|SEG_H|SEG_M,                // '+'
+  56            SEG_L,                          // ','
+  57            SEG_G|SEG_H,                      // '-'
+  58            SEG_M,                          // '.'
+  59            SEG_K|SEG_L,                      // '/'
+  60            SEG_A|SEG_B|SEG_C|SEG_D|SEG_E|SEG_F,          // '0'
+  61            SEG_B|SEG_C,                      // '1'
+  62            SEG_A|SEG_B|SEG_D|SEG_E|SEG_G|SEG_H,          // '2'
+  63            SEG_A|SEG_B|SEG_C|SEG_D|SEG_G|SEG_H,          // '3'
+  64            SEG_B|SEG_C|SEG_F|SEG_G|SEG_H,              // '4'
+  65            SEG_A|SEG_C|SEG_D|SEG_F|SEG_G|SEG_H,          // '5'
+  66            SEG_A|SEG_C|SEG_D|SEG_E|SEG_F|SEG_G|SEG_H,        // '6'
+  67            SEG_A|SEG_B|SEG_C|SEG_F,                // '7'
+  68            SEG_A|SEG_B|SEG_C|SEG_D|SEG_E|SEG_F|SEG_G|SEG_H,    // '8'
+  69            SEG_A|SEG_B|SEG_C|SEG_D|SEG_F|SEG_G|SEG_H,        // '9'
+  70            SEG_J|SEG_M,                      // ':'
+  71            SEG_J|SEG_L,                      // '//'
+  72            SEG_K|SEG_N,                      // '<'
+  73            SEG_D|SEG_G|SEG_H,                    // '='
+  74            SEG_I|SEG_L,                      // '>'
+  75            SEG_A|SEG_B|SEG_F|SEG_H|SEG_M,              // '?'
+  76            SEG_A|SEG_B|SEG_C|SEG_D|SEG_E|SEG_G|SEG_M,        // '@'
+  77            SEG_A|SEG_B|SEG_C|SEG_E|SEG_F|SEG_G|SEG_H,        // 'A'
+  78            SEG_A|SEG_B|SEG_C|SEG_D|SEG_J|SEG_H|SEG_M,        // 'B'
+  79            SEG_A|SEG_D|SEG_E|SEG_F,                // 'C'
+  80            SEG_A|SEG_B|SEG_C|SEG_D|SEG_J|SEG_M,          // 'D'
+  81            SEG_A|SEG_D|SEG_E|SEG_F|SEG_G|SEG_H,          // 'E'
+  82            SEG_A|SEG_E|SEG_F|SEG_G|SEG_H,              // 'F'
+  83            SEG_A|SEG_C|SEG_D|SEG_E|SEG_F|SEG_H,          // 'G'
+  84            SEG_B|SEG_C|SEG_E|SEG_F|SEG_G|SEG_H,          // 'H'
+  85            SEG_A|SEG_D|SEG_J|SEG_M,                // 'I'
+  86            SEG_B|SEG_C|SEG_D|SEG_E,                // 'J'
+  87            SEG_E|SEG_F|SEG_K|SEG_G|SEG_N,              // 'K'
+  88            SEG_D|SEG_E|SEG_F,                    // 'L'
+  89            SEG_B|SEG_C|SEG_E|SEG_F|SEG_I|SEG_K,          // 'M'
+  90            SEG_B|SEG_C|SEG_E|SEG_F|SEG_A,          // 'N'
+  91            SEG_A|SEG_B|SEG_C|SEG_D|SEG_E|SEG_F,          // 'O'
+  92            SEG_A|SEG_B|SEG_E|SEG_F|SEG_G|SEG_H,          // 'P'
+  93            SEG_A|SEG_B|SEG_C|SEG_D|SEG_E|SEG_F|SEG_N,        // 'Q'
+  94            SEG_A|SEG_B|SEG_E|SEG_F|SEG_G|SEG_H|SEG_N,        // 'R'
+  95            SEG_A|SEG_C|SEG_D|SEG_F|SEG_G|SEG_H,              // 'S'
+  96            SEG_A|SEG_J|SEG_M,                    // 'T'
+  97            SEG_B|SEG_C|SEG_D|SEG_E|SEG_F,              // 'U'
+  98            SEG_E|SEG_F|SEG_K|SEG_L,                // 'V'
+  99            SEG_B|SEG_C|SEG_E|SEG_F|SEG_L|SEG_N,          // 'W'
+ 100            SEG_I|SEG_K|SEG_L|SEG_N,                // 'X'
+ 101            SEG_B|SEG_C|SEG_D|SEG_F|SEG_G|SEG_H,          // 'Y'
+ 102            SEG_A|SEG_D|SEG_K|SEG_L,                // 'Z'
+ 103            0x0000,                         // '['
+ 104            0x0000,                         // '\'
+ 105            0x0000,                         // ']'
+ 106            0x0000,                         // '^'
+ 107            SEG_D,                          // '_'
+ 108            SEG_K,                          // '''
+ 109            SEG_A|SEG_B|SEG_C|SEG_E|SEG_F|SEG_G|SEG_H,        // 'A'
+ 110            SEG_A|SEG_B|SEG_C|SEG_D|SEG_J|SEG_H|SEG_M,        // 'B'
+ 111            SEG_A|SEG_D|SEG_E|SEG_F,                // 'C'
+ 112            SEG_A|SEG_B|SEG_C|SEG_D|SEG_J|SEG_M,          // 'D'
+ 113            SEG_A|SEG_D|SEG_E|SEG_F|SEG_G|SEG_H,          // 'E'
+ 114            SEG_A|SEG_E|SEG_F|SEG_G|SEG_H,              // 'F'
+ 115            SEG_A|SEG_C|SEG_D|SEG_E|SEG_F|SEG_H,          // 'G'
+ 116            SEG_B|SEG_C|SEG_E|SEG_F|SEG_G|SEG_H,          // 'H'
+C51 COMPILER V9.56.0.0   LCD                                                               12/17/2017 17:53:42 PAGE 3   
+
+ 117            SEG_A|SEG_D|SEG_J|SEG_M,                // 'I'
+ 118            SEG_B|SEG_C|SEG_D|SEG_E,                // 'J'
+ 119            SEG_E|SEG_F|SEG_K|SEG_G|SEG_N,              // 'K'
+ 120            SEG_D|SEG_E|SEG_F,                    // 'L'
+ 121            SEG_B|SEG_C|SEG_E|SEG_F|SEG_I|SEG_K,          // 'M'
+ 122            SEG_A|SEG_B|SEG_C|SEG_E|SEG_F,              // 'N'
+ 123            SEG_A|SEG_B|SEG_C|SEG_D|SEG_E|SEG_F,          // 'O'
+ 124            SEG_A|SEG_B|SEG_E|SEG_F|SEG_G|SEG_H,          // 'P'
+ 125            SEG_A|SEG_B|SEG_C|SEG_D|SEG_E|SEG_F|SEG_N,        // 'Q'
+ 126            SEG_A|SEG_B|SEG_E|SEG_F|SEG_G|SEG_H|SEG_N,        // 'R'
+ 127            SEG_A|SEG_C|SEG_D|SEG_F|SEG_G|SEG_H,              // 'S'
+ 128            SEG_A|SEG_J|SEG_M,                    // 'T'
+ 129            SEG_B|SEG_C|SEG_D|SEG_E|SEG_F,              // 'U'
+ 130            SEG_E|SEG_F|SEG_K|SEG_L,                // 'V'
+ 131            SEG_B|SEG_C|SEG_E|SEG_F|SEG_L|SEG_N,          // 'W'
+ 132            SEG_I|SEG_K|SEG_L|SEG_N,                // 'X'
+ 133            SEG_B|SEG_C|SEG_D|SEG_F|SEG_G|SEG_H,          // 'Y'
+ 134            SEG_A|SEG_D|SEG_K|SEG_L,                // 'Z'
+ 135          
+ 136          
+ 137            
+ 138          };
+ 139          
+ 140          u8 code LCD_String[STR_MAX][4]={
+ 141            
+ 142          "OFF ",
+ 143          "ON  ",
+ 144          "SCAN",
+ 145          };
+ 146          
+ 147          /*
+ 148          *************************************************************************
+ 149          设计    liwei
+ 150          文件    DIGIT_POS_BIT
+ 151          功能    每个8的每个笔画的位置
+ 152                            共4个8字每个8字7个笔画
+ 153          
+ 154          LCD 建模
+ 155               A
+ 156           F       B
+ 157               G
+ 158           E       C
+ 159               D
+ 160                    
+ 161          define px(a,b)   ( (a<<4)|b)   // a表示地址偏移量起始地址为0x80
+ 162                                                        b表示com0~com3
+ 163          *************************************************************************
+ 164          */
+ 165          
+ 166          BYTE code DIGIT_POS_BIT[]=
+ 167          {
+ 168                  //  A            B        C           D           E             F            G       
+ 169                 px(14,3),px(14,2),px(14,1),px(14,0),px(15,1),px(15,3),px(15,2),    // 第1个8字
+ 170                 px(12,3),px(12,2),px(12,1),px(12,0),px(13,1),px(13,3),px(13,2),    // 第2个8字
+ 171                      px(10,3),px(10,2),px(10,1),px(10,0),px(11,1),px(11,3),px(11,2),   // 第3个8字
+ 172                      px(8,3),  px(8,2), px(8,1),  px(8,0),  px(9,1), px(9,3),  px(9,2),    // 第4个8字
+ 173          
+ 174              px(1,0),px(1,1),px(1,2),px(1,3),px(0,3),px(0,1),px(0,2),        // 第5个8字
+ 175                       px(3,0),px(3,1),px(3,2),px(3,3),px(2,3),px(2,1),px(2,2),       // 第6个8字
+ 176                   px(5,0),px(5,1),px(5,2),px(5,3),px(4,3),px(4,1),px(4,2),       // 第7个8字
+ 177                       px(7,0),px(7,1),px(7,2),px(7,3),px(6,3),px(6,1),px(6,2),       // 第8个8字
+ 178          
+C51 COMPILER V9.56.0.0   LCD                                                               12/17/2017 17:53:42 PAGE 4   
+
+ 179            
+ 180          };
+ 181          
+ 182          u8 code ICON_POS_BIT[]=
+ 183          {  
+ 184                  // T        T1        T2      T3         T4        BC1       BC2         L1
+ 185              px(2,0),px(9,0),px(13,0),px(18,0),px(18,1),px(15,0),px(11,0),px(16,3),
+ 186              // L2    L3     L4    L5    L6          L7           L8       L9  
+ 187              px(16,2),px(16,1),px(16,0),px(17,0),px(17,1),px(17,2),px(17,3),px(18,3),
+ 188                // L10
+ 189              px(18,2),NOT_SHOW, NOT_SHOW, NOT_SHOW,NOT_SHOW, NOT_SHOW, NOT_SHOW,NOT_SHOW,
+ 190          };
+ 191          
+ 192          
+ 193          
+ 194          
+ 195          /*
+ 196          *************************************************************************
+ 197          设计    liwei
+ 198          文件    DisplayIcon
+ 199          功能    显示数字之外的图标文字信息
+ 200          
+ 201          *************************************************************************
+ 202          */
+ 203          
+ 204          void DisplayIcon(void)
+ 205          {
+ 206   1        u8 i,j,offset,p,x,temp,px;
+ 207   1        
+ 208   1        for(i=0;i<3;i++)  // 暂时定义2组图标
+ 209   1          {
+ 210   2            temp=i*8;
+ 211   2            for(j=0,offset=1;j<8;j++,offset<<=1)
+ 212   2              {
+ 213   3                px=ICON_POS_BIT[temp+j];
+ 214   3                          p = px >>3;  //high 5 bits index
+ 215   3                x = px & 0x7;//low  3 bits shift
+ 216   3                if(Uicon[i].Bb&offset)DispBuff[p]|=(1<<x);
+ 217   3                else DispBuff[p]&=(~(1<<x));
+ 218   3              }
+ 219   2          }
+ 220   1        
+ 221   1        
+ 222   1        for(i=0;i<=18;i++)
+ 223   1          {
+ 224   2            PBYTE[0x80+i]=DispBuff[i]; // 写数据到缓存区
+ 225   2          }
+ 226   1      }
+ 227          
+ 228          
+ 229          
+ 230          /*
+ 231          *************************************************************************
+ 232          设计    liwei
+ 233          文件    DisplayNumber
+ 234          功能    数字显示函数在LCD中显示10个数字
+ 235          
+ 236          *************************************************************************
+ 237          */
+ 238          
+ 239          void DisplayNumber(void)
+ 240          {
+C51 COMPILER V9.56.0.0   LCD                                                               12/17/2017 17:53:42 PAGE 5   
+
+ 241   1        u8 i,j,p,x,px,temp;
+ 242   1        u16 dispmask,offset;
+ 243   1        for(i=0;i<8;i++)
+ 244   1          {
+ 245   2            dispmask=DIGIT_CODE[DispNum[i]];   //获得每个数字
+ 246   2            temp=i*7;
+ 247   2            for(j=0,offset=1;j<7;j++,offset<<=1)   // 获得每个数字的每个笔画
+ 248   2              {
+ 249   3                p=temp+j;
+ 250   3                x=DispBuff[p];
+ 251   3                px=DIGIT_POS_BIT[p];
+ 252   3                p=(px>>3);//地址偏移
+ 253   3                
+ 254   3                px = (1<<(px&0x7));       //low  3 bits shift
+ 255   3                x=DispBuff[p];
+ 256   3                if(dispmask&offset) x|=px;
+ 257   3                else x&=(~px);
+ 258   3                DispBuff[p]=x;
+ 259   3                
+ 260   3              }
+ 261   2          }
+ 262   1        for(i=0;i<=18;i++)
+ 263   1          {
+ 264   2            PBYTE[0x80+i]=DispBuff[i]; // 写数据到缓存区
+ 265   2          }
+ 266   1      }
+ 267          
+ 268          /*
+ 269          *************************************************************************
+ 270          设计    liwei
+ 271          文件    DisplayClear
+ 272          功能        按模式分别清除字符
+ 273          
+ 274          *************************************************************************
+ 275          */
+ 276          
+ 277          void DisplayClear(u8 mode)
+ 278          {
+ 279   1        u8 i;
+ 280   1        switch(mode)
+ 281   1          { 
+ 282   2            case CLEAR_ALL: for(i=0;i<=18;i++){PBYTE[0x80+i]=0;};
+ 283   2            break;
+ 284   2            case CLEAR_ICON:
+ 285   2              Uicon[0].Bb=0x00;
+ 286   2              Uicon[1].Bb=0x00;
+ 287   2              Uicon[2].Bb=0x00;
+ 288   2      
+ 289   2              DisplayIcon();
+ 290   2              break;
+ 291   2            case CLEAR_NUM_ALL:
+ 292   2              for(i=0;i<8;i++)
+ 293   2                {
+ 294   3                  DispNum[i]=0x00;
+ 295   3                }
+ 296   2              DisplayNumber();
+ 297   2              break;
+ 298   2          }
+ 299   1      }
+ 300          
+ 301          
+ 302          
+C51 COMPILER V9.56.0.0   LCD                                                               12/17/2017 17:53:42 PAGE 6   
+
+ 303          
+ 304          
+ 305          /*
+ 306          *************************************************************************
+ 307          设计    liwei
+ 308          文件    LCD
+ 309          功能    LCD的配置和使用函数
+ 310                    我们使用了56F216的A模式lcd驱动
+ 311          
+ 312          *************************************************************************
+ 313          */
+ 314          
+ 315          void LCDInit(void)
+ 316          {
+ 317   1      
+ 318   1        //Set GPIO as output
+ 319   1        //ACOM port : GPIOC1 - GPIOC4
+ 320   1        rGPIOC_OEN |= 0x1E; 
+ 321   1      
+ 322   1        //rGPIOC_FUN2|=0x54;  // c2   c3  设置为com2 com1
+ 323   1        //rGPIOC_FUN1|=0x55;  //       c4  设置为com0         c5 c6 c7为seg 0  seg 1 seg2
+ 324   1      
+ 325   1        
+ 326   1        //ASEG : ASEG0 - ASEG18
+ 327   1        //ASEG0 - 2 = GPIOC5 - GPIOC7
+ 328   1        rGPIOC_OEN |= 0xE0;
+ 329   1        //ASEG3 - 10 = GPIOD0 - GPIOD7
+ 330   1        rGPIOD_OEN |= 0xFF; 
+ 331   1        //ASEG11 - 18 = GPIOE0 - GPIOE7
+ 332   1        rGPIOE_OEN |= 0xFF;
+ 333   1      
+ 334   1        //ASEG0 - 18 复用功能开启
+ 335   1      
+ 336   1        rGPIOC_FUN2|=0x55;  
+ 337   1        rGPIOC_FUN1|=0x55;  
+ 338   1      
+ 339   1      
+ 340   1            rGPIOD_FUN1|=0x55; 
+ 341   1        rGPIOD_FUN2|=0x55;  
+ 342   1        
+ 343   1        rGPIOE_FUN1|=0x55;  
+ 344   1        rGPIOE_FUN2|=0x55;  
+ 345   1      
+ 346   1        //GPIOC2_PIN_OE=GPIOC3_PIN_OE=GPIOC4_PIN_OE=GPIOC5_PIN_OE=GPIOC6_PIN_OE=GPIOC7_PIN_OE=1;
+ 347   1        //GPIOD0_PIN_OE=GPIOD1_PIN_OE=GPIOD2_PIN_OE=GPIOD3_PIN_OE=GPIOD4_PIN_OE=GPIOD5_PIN_OE=GPIOD6_PIN_OE=GPIOD
+             -7_PIN_OE=1;
+ 348   1        //GPIOE0_PIN_OE=GPIOE1_PIN_OE=1;  // e0 e1 设置为输出
+ 349   1      
+ 350   1        //rGPIOC_FUN2|=0x50;  // c2   c3  设置为com2 com1
+ 351   1        //rGPIOC_FUN1|=0x55;  //       c4  设置为com0         c5 c6 c7为seg 0  seg 1 seg2
+ 352   1      
+ 353   1        //rGPIOD_FUN1|=0x55;  // d0 d1 d2 d3 为seg3 seg4 seg5 seg 6
+ 354   1        //rGPIOD_FUN2|=0x55;  // d4 d5 d6 d7 为seg7 seg8 seg9 seg 10
+ 355   1        //rGPIOE_FUN2|=0x05;  // e0 e1 为seg11 seg 12
+ 356   1      
+ 357   1        rWTMR_SLT |= 0x01;  //watch time = 31.25ms  
+ 358   1        rWTMR_CTL = 0x20; //致能WTMR，清除WTMR事件
+ 359   1      
+ 360   1        
+ 361   1        rLCD_CTL1 = 0x00;   //关闭,正常负载,模式A
+ 362   1        rLCD_CTL2 = 0x06;   //256Hz //clk:000;bias:01:1/3;duty:10:1/4
+ 363   1        
+C51 COMPILER V9.56.0.0   LCD                                                               12/17/2017 17:53:42 PAGE 7   
+
+ 364   1        rLCD_CVLS = 0x10;   //For VDD=5V
+ 365   1        
+ 366   1        //rLCD_CVLS = 0x1e;   //For VDD=3.3V
+ 367   1      
+ 368   1      
+ 369   1      //  rLCD_PSC=0x08;                  //液晶正常驱动模式
+ 370   1      
+ 371   1      #if 0
+                rLCD_DAT2 = 0x01;
+              
+                /*
+                rLCD_DAT0 = 0x0f;
+                rLCD_DAT1 = 0x0f;
+                rLCD_DAT2 = 0x0f;
+                rLCD_DAT3 = 0x0f;
+                rLCD_DAT4 = 0x0f;
+                rLCD_DAT5 = 0x0f;
+                rLCD_DAT6 = 0x0f;
+                rLCD_DAT7 = 0x0f;
+                rLCD_DAT8 = 0x0f;
+                rLCD_DAT9 = 0x0f;
+                rLCD_DAT10 = 0x0f;
+                rLCD_DAT11 = 0x0f;
+                rLCD_DAT12 = 0x0f;
+                rLCD_DAT13 = 0x0f;
+                rLCD_DAT14 = 0x0f;
+                rLCD_DAT15 = 0x0f;
+                rLCD_DAT16 = 0x0f;
+                rLCD_DAT17 = 0x0f;
+                rLCD_DAT18 = 0x0f;
+                */
+                
+              #else
+ 397   1      
+ 398   1         DispNum[0]=0;
+ 399   1         DispNum[1]=0;
+ 400   1         DispNum[2]=0;
+ 401   1         DispNum[3]=0;
+ 402   1        //////////////
+ 403   1         DispNum[4]=0;
+ 404   1         DispNum[5]=0;
+ 405   1         DispNum[6]=0;
+ 406   1         DispNum[7]=0;
+ 407   1             /////////////
+ 408   1      
+ 409   1      
+ 410   1      
+ 411   1         ICON_T     =1; 
+ 412   1         ICON_T1    =1; 
+ 413   1         ICON_T2    =1; 
+ 414   1         ICON_T3    =1; 
+ 415   1         ICON_T4    =1; 
+ 416   1         ICON_BC1  =1; 
+ 417   1         ICON_BC2  =1; 
+ 418   1         ICON_L1    =0; 
+ 419   1         
+ 420   1         ICON_L2    =1; 
+ 421   1         ICON_L3    =1; 
+ 422   1         ICON_L4    =1; 
+ 423   1         ICON_L5    =1; 
+ 424   1         ICON_L6    =1; 
+ 425   1         ICON_L7    =1; 
+C51 COMPILER V9.56.0.0   LCD                                                               12/17/2017 17:53:42 PAGE 8   
+
+ 426   1         ICON_L8    =1; 
+ 427   1      
+ 428   1         ICON_L9    =1; 
+ 429   1         ICON_L10  =1; 
+ 430   1      
+ 431   1        DisplayNumber();
+ 432   1        DisplayIcon();
+ 433   1      
+ 434   1        //DisplayClear(CLEAR_ALL);
+ 435   1        //DisplayClear(CLEAR_NUM_ALL);
+ 436   1        // ICON_T     =1; 
+ 437   1      
+ 438   1      #endif
+ 439   1      
+ 440   1      
+ 441   1      
+ 442   1        rSEG_EN0=0xff;      // 使能输出g0~g7
+ 443   1        rSEG_EN1=0xff;      // 使能输出 g8~g12
+ 444   1        rSEG_EN2=0xff;      // 使能输出 g8~g12
+ 445   1        rLCD_CTL1 = 0x00;   //关闭,正常负载,模式A
+ 446   1        rLCD_CTL2 = 0x06;   //256Hz //clk:000;bias:01:1/3;duty:10:1/4
+ 447   1        
+ 448   1        //rLCD_CVLS = 0x10;   //For VDD=5V
+ 449   1        
+ 450   1        rLCD_CVLS = 0x1F;   //For VDD=3.3V  //这个没有设置正确会导致屏幕不亮
+ 451   1        rLCD_CTL1 |= 0x80;    //开启LCD电源
+ 452   1      
+ 453   1      
+ 454   1        
+ 455   1      
+ 456   1      
+ 457   1        
+ 458   1      }
+ 459          
+ 460          
+ 461          #define Verf   (3.3)
+ 462          #define Amp  206
+ 463          #define Res   3
+ 464          void DisplayUSB2_A_V(void)
+ 465          {
+ 466   1             DATA u16 adc,adc1,adc2;
+ 467   1        DATA u8 i;
+ 468   1        DATA float temp;
+ 469   1      
+ 470   1        adc1=ReadADC(ADC_CH4);  /*电压测试*/
+ 471   1        adc2=ReadADC(ADC_CH5);  /*电压测试*/
+ 472   1        //adc3=ReadADC(ADC_CH6);  /*电压测试*/
+ 473   1      
+ 474   1        adc=(adc1+adc2)/2;
+ 475   1        
+ 476   1        temp= (float) adc/(float)4096;
+ 477   1        temp=(float)Verf*temp*(float)110/(float)10;
+ 478   1      
+ 479   1        temp=(float)temp*(float)10;
+ 480   1      
+ 481   1        i=(u8)temp;
+ 482   1        usb2V=i;
+ 483   1      
+ 484   1        if(i>100)
+ 485   1          {
+ 486   2            ICON_BC1=1;
+ 487   2            DispNum[0]=i%100/10;
+C51 COMPILER V9.56.0.0   LCD                                                               12/17/2017 17:53:42 PAGE 9   
+
+ 488   2            DispNum[1]=i%100%10;
+ 489   2          }
+ 490   1        else
+ 491   1          {
+ 492   2            ICON_BC1=0;
+ 493   2            DispNum[0]=i/10;
+ 494   2            DispNum[1]=i%10;
+ 495   2          }
+ 496   1      
+ 497   1        adc=ReadADC(ADC_CH1);   /*电流测试*/
+ 498   1        temp= (float) adc/(float)4096;
+ 499   1        temp=(float)Verf*temp;
+ 500   1        temp=temp*(float)(1000)/(float)Amp/(float)Res;
+ 501   1        temp=temp*(float)10;
+ 502   1        i=(u8)temp;
+ 503   1        usb2A=i;
+ 504   1          if(i<10)
+ 505   1          {
+ 506   2            DispNum[4]=0;
+ 507   2            DispNum[5]=i;
+ 508   2          }
+ 509   1          else
+ 510   1          {
+ 511   2            DispNum[4]=i/10;
+ 512   2            DispNum[5]=i%10;
+ 513   2          }
+ 514   1      }
+ 515          
+ 516          
+ 517          
+ 518          void DisplayUSB1_V_A(void)
+ 519          {
+ 520   1             DATA u16 adc,adc1,adc2;
+ 521   1        DATA u8 i;
+ 522   1        DATA float temp;
+ 523   1      
+ 524   1      
+ 525   1        adc1=ReadADC(ADC_CH2);  /*电压测试*/
+ 526   1        adc2=ReadADC(ADC_CH3);  /*电压测试*/
+ 527   1        //adc3=ReadADC(ADC_CH6);  /*电压测试*/
+ 528   1      
+ 529   1        adc=(adc1+adc2)/2;
+ 530   1      
+ 531   1        
+ 532   1        temp= (float) adc/(float)4096;
+ 533   1        temp=(float)Verf*temp*(float)147/(float)47;
+ 534   1      
+ 535   1        temp=(float)temp*(float)10;
+ 536   1        i=(u8)temp;
+ 537   1        usb1V=i;
+ 538   1        if(i>100)
+ 539   1          {
+ 540   2            ICON_BC2=1;
+ 541   2            DispNum[2]=i%10/10;
+ 542   2            DispNum[3]=i%100%10;
+ 543   2          }
+ 544   1        else
+ 545   1          {
+ 546   2            ICON_BC2=0;
+ 547   2            DispNum[2]=i/10;
+ 548   2            DispNum[3]=i%10;
+ 549   2          }
+C51 COMPILER V9.56.0.0   LCD                                                               12/17/2017 17:53:42 PAGE 10  
+
+ 550   1      
+ 551   1        adc=ReadADC(ADC_CH0);   /*电流测试*/
+ 552   1        temp= (float) adc/(float)4096;
+ 553   1        temp=(float)Verf*temp;
+ 554   1        temp=temp*(float)(1000)/(float)Amp/(float)Res;
+ 555   1      
+ 556   1      
+ 557   1        temp=temp*(float)10;
+ 558   1        i=(u8)temp;
+ 559   1         usb1A=i;
+ 560   1        if(i<10)
+ 561   1          {
+ 562   2            DispNum[6]=0;
+ 563   2            DispNum[7]=i;
+ 564   2          }
+ 565   1        else
+ 566   1          {
+ 567   2            DispNum[6]=i/10;
+ 568   2            DispNum[7]=i%10;
+ 569   2          }
+ 570   1      }
+ 571          
+ 572          
+ 573          
+ 574          /*
+ 575          *************************************************************************
+ 576          设计    liwei
+ 577          文件    CalW
+ 578          功能    计算充电效率
+ 579          基本算法:
+ 580          设定太阳能的总功率为20 W 
+ 581          usb1+usb2的功率和=总的输出功率总总功率放大了100倍
+ 582          
+ 583          *************************************************************************
+ 584          */
+ 585          
+ 586          uint16 code KeycodeArryW[][3] = {
+ 587          
+ 588            {0,     0,               0},         
+ 589            {11,  200,               1},         
+ 590            {201,   400,        2},         
+ 591            {401,   600,          3},        
+ 592            {601,     800,          4},       
+ 593            {801,   1000,       5},       
+ 594            {1001,  1200,       6},      
+ 595            {1201,  1400,       7},      
+ 596            {1401,  1600,       8},      
+ 597            {1601,  1800,       9},      
+ 598            {1801,  2000,       10},    
+ 599            {2001,  3000,       10},    
+ 600            
+ 601          
+ 602          };
+ 603          
+ 604          
+ 605          u8 CalW(void)
+ 606          {
+ 607   1        u8 i;
+ 608   1        u16 w1,w2,w;
+ 609   1        
+ 610   1        w1=(u16)usb1A*(u16)usb1V;
+ 611   1        w2=(u16)usb2A*(u16)usb2V;
+C51 COMPILER V9.56.0.0   LCD                                                               12/17/2017 17:53:42 PAGE 11  
+
+ 612   1      
+ 613   1        w=w1+w2;
+ 614   1        //Printf("\r\nPower W=%d ", (WORD)w);
+ 615   1      
+ 616   1        for (i = 0; i < sizeof(KeycodeArryW); i++)  {
+ 617   2        if ((w >= KeycodeArryW[i][0]) && (w <= KeycodeArryW[i][1]))
+ 618   2        break;
+ 619   2        } 
+ 620   1        if (i >= 11) return  10;
+ 621   1        else return  KeycodeArryW[i][2];
+ 622   1      }
+ 623          
+ 624          
+ 625          /*
+ 626          *************************************************************************
+ 627          设计    liwei
+ 628          文件    SunPowerGo
+ 629          功能    动态显示充电的箭头
+ 630          *************************************************************************
+ 631          */
+ 632          DATA u8 icongo=0;
+ 633          void SunPowerGo(void)
+ 634          {
+ 635   1        icongo++;
+ 636   1        if(icongo>3)icongo=0;
+ 637   1      
+ 638   1        switch(icongo)
+ 639   1          {
+ 640   2            case 0:
+ 641   2               ICON_T2=0;
+ 642   2               ICON_T3=0;     
+ 643   2               ICON_T4=0;
+ 644   2      
+ 645   2              break;
+ 646   2            case 1:
+ 647   2               ICON_T2=1;
+ 648   2               ICON_T3=0;     
+ 649   2               ICON_T4=0;
+ 650   2      
+ 651   2              break;
+ 652   2            case 2:
+ 653   2               ICON_T2=1;
+ 654   2               ICON_T3=1;     
+ 655   2               ICON_T4=0;
+ 656   2      
+ 657   2              break;
+ 658   2            case 3:
+ 659   2               ICON_T2=1;
+ 660   2               ICON_T3=1;     
+ 661   2               ICON_T4=1;
+ 662   2              
+ 663   2              break;
+ 664   2          }
+ 665   1        
+ 666   1        
+ 667   1      }
+ 668          
+ 669          void ShowProcess_bar(u8 n)
+ 670          {
+ 671   1      
+ 672   1        switch(n)
+ 673   1          {
+C51 COMPILER V9.56.0.0   LCD                                                               12/17/2017 17:53:42 PAGE 12  
+
+ 674   2            case 0:
+ 675   2               ICON_L10=0; ICON_L9=0; ICON_L8=0; ICON_L7=0; ICON_L6=0; 
+ 676   2               ICON_L5=0; ICON_L4=0; ICON_L3=0;ICON_L2=0; ICON_L1=0;
+ 677   2            break;  
+ 678   2              
+ 679   2            case 1:
+ 680   2               ICON_L10=1; ICON_L9=0; ICON_L8=0; ICON_L7=0; ICON_L6=0; 
+ 681   2               ICON_L5=0; ICON_L4=0; ICON_L3=0;ICON_L2=0; ICON_L1=0;
+ 682   2            break;  
+ 683   2              
+ 684   2            case 2:
+ 685   2               ICON_L10=1; ICON_L9=1; ICON_L8=0; ICON_L7=0; ICON_L6=0; 
+ 686   2               ICON_L5=0; ICON_L4=0; ICON_L3=0;ICON_L2=0; ICON_L1=0;
+ 687   2            break;  
+ 688   2              
+ 689   2            case 3:
+ 690   2               ICON_L10=1; ICON_L9=1; ICON_L8=1; ICON_L7=0; ICON_L6=0; 
+ 691   2               ICON_L5=0; ICON_L4=0; ICON_L3=0;ICON_L2=0; ICON_L1=0;
+ 692   2            break;
+ 693   2      
+ 694   2            case 4:
+ 695   2               ICON_L10=1; ICON_L9=1; ICON_L8=1; ICON_L7=1; ICON_L6=0; 
+ 696   2               ICON_L5=0; ICON_L4=0; ICON_L3=0;ICON_L2=0; ICON_L1=0;
+ 697   2            break;
+ 698   2      
+ 699   2      
+ 700   2            case 5:
+ 701   2               ICON_L10=1; ICON_L9=1; ICON_L8=1; ICON_L7=1; ICON_L6=1; 
+ 702   2               ICON_L5=0; ICON_L4=0; ICON_L3=0;ICON_L2=0; ICON_L1=0;
+ 703   2            break;
+ 704   2      
+ 705   2            case 6:
+ 706   2               ICON_L10=1; ICON_L9=1; ICON_L8=1; ICON_L7=1; ICON_L6=1; 
+ 707   2               ICON_L5=1; ICON_L4=0; ICON_L3=0;ICON_L2=0; ICON_L1=0;
+ 708   2            break;
+ 709   2      
+ 710   2            case 7:
+ 711   2               ICON_L10=1; ICON_L9=1; ICON_L8=1; ICON_L7=1; ICON_L6=1; 
+ 712   2               ICON_L5=1; ICON_L4=1; ICON_L3=0;ICON_L2=0; ICON_L1=0;
+ 713   2            break;
+ 714   2      
+ 715   2            case 8:
+ 716   2               ICON_L10=1; ICON_L9=1; ICON_L8=1; ICON_L7=1; ICON_L6=1; 
+ 717   2               ICON_L5=1; ICON_L4=1; ICON_L3=1;ICON_L2=0; ICON_L1=0;
+ 718   2            break;  
+ 719   2      
+ 720   2            case 9:
+ 721   2               ICON_L10=1; ICON_L9=1; ICON_L8=1; ICON_L7=1; ICON_L6=1; 
+ 722   2               ICON_L5=1; ICON_L4=1; ICON_L3=1;ICON_L2=1; ICON_L1=0;
+ 723   2            break;
+ 724   2      
+ 725   2            case 10:
+ 726   2               ICON_L10=1; ICON_L9=1; ICON_L8=1; ICON_L7=1; ICON_L6=1; 
+ 727   2               ICON_L5=1; ICON_L4=1; ICON_L3=1;ICON_L2=1; ICON_L1=1;
+ 728   2            break;    
+ 729   2      
+ 730   2          }
+ 731   1        
+ 732   1        
+ 733   1      }
+ 734          
+ 735          
+C51 COMPILER V9.56.0.0   LCD                                                               12/17/2017 17:53:42 PAGE 13  
+
+ 736          /*
+ 737          *************************************************************************
+ 738          设计    liwei
+ 739          文件    ShowQCicon
+ 740          功能    显示QC4.0标志
+ 741          *************************************************************************
+ 742          */
+ 743          void ShowQCicon(void)
+ 744          {
+ 745   1        if(usb1V>55)
+ 746   1          {
+ 747   2            ICON_T1=1;
+ 748   2          }
+ 749   1        else
+ 750   1          {
+ 751   2            ICON_T1=0;
+ 752   2          }
+ 753   1      }
+ 754          
+ 755          /*
+ 756          *************************************************************************
+ 757          设计    liwei
+ 758          文件    DisplayAll
+ 759          功能    在固定定时器的时间内把数据放到LCD 显示驱动
+ 760                中去
+ 761          *************************************************************************
+ 762          */
+ 763          
+ 764          void DisplayAll(void)
+ 765          {
+ 766   1        DisplayUSB1_V_A();
+ 767   1        DisplayUSB2_A_V();
+ 768   1        SunPowerGo();
+ 769   1        CalW();
+ 770   1        ShowProcess_bar(CalW());
+ 771   1      
+ 772   1      
+ 773   1        DisplayNumber();
+ 774   1        DisplayIcon();
+ 775   1      }
+ 776          
+ 777          
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =   1890    ----
+   CONSTANT SIZE    =    287    ----
+   XDATA SIZE       =     11      10
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =      6      22
+   IDATA SIZE       =     19    ----
+   BIT SIZE         =   ----    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

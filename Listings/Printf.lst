@@ -1,0 +1,285 @@
+C51 COMPILER V9.56.0.0   PRINTF                                                            12/17/2017 17:53:42 PAGE 1   
+
+
+C51 COMPILER V9.56.0.0, COMPILATION OF MODULE PRINTF
+OBJECT MODULE PLACED IN .\Objects\Printf.obj
+COMPILER INVOKED BY: E:\Keil\C51\BIN\C51.EXE code\Printf.c LARGE OPTIMIZE(8,SPEED) BROWSE DEBUG OBJECTEXTEND PRINT(.\Lis
+                    -tings\Printf.lst) TABS(2) OBJECT(.\Objects\Printf.obj)
+
+line level    source
+
+   1          #include "gheader.h"
+   2          
+   3          
+   4          /*
+   5          *******************************************************************************
+   6          设计    liwei
+   7          文件    Printf.c
+   8          功能    输出打印信息
+   9          
+  10          
+  11          *******************************************************************************
+  12          
+  13          */
+  14          
+  15          code  BYTE Hex[]="0123456789ABCDEF";
+  16          
+  17          
+  18          void DoPrint( const char *fmt, va_list ap )
+  19          {
+  20   1          char  ch;
+  21   1          char  i;
+  22   1          long  value;
+  23   1          bit   fl_zero;
+  24   1          bit   fl_num;
+  25   1          BYTE  fl_len;
+  26   1          BYTE  cnt;
+  27   1          uint32 mask=1;
+  28   1      
+  29   1          char *ptr;
+  30   1      
+  31   1        while(1) {
+  32   2          
+  33   2          //----- Find Formatter % -----
+  34   2      
+  35   2          switch( ch = *fmt++ ) {
+  36   3            case 0:   return;
+  37   3            case '%': if( *fmt != '%' ) break;
+  38   3                  fmt++;
+  39   3            default:  _outchar( ch );
+  40   3                  continue;
+  41   3          }
+  42   2      
+  43   2          //----- Get Count -------------
+  44   2          
+  45   2          fl_zero = 0;
+  46   2          fl_num = 0;
+  47   2          cnt = 0;
+  48   2      
+  49   2          ch = *fmt++;
+  50   2      
+  51   2          if( ch=='0' ) {
+  52   3            fl_zero = 1;
+  53   3            ch = *fmt++;
+  54   3            cnt = ch - '0';
+C51 COMPILER V9.56.0.0   PRINTF                                                            12/17/2017 17:53:42 PAGE 2   
+
+  55   3            ch = *fmt++;
+  56   3          }
+  57   2          else if( ch>='0' && ch<='9' ) {
+  58   3            cnt = ch - '0';
+  59   3            ch = *fmt++;
+  60   3          }
+  61   2      
+  62   2          //----- Get char(B) / int / long(L) ----------------
+  63   2      
+  64   2          fl_len = 2;
+  65   2      
+  66   2          switch(ch) {
+  67   3          case 'l':
+  68   3          case 'L': ch = *fmt++;  fl_len = 4;   break;
+  69   3          case 'b':
+  70   3          case 'B': ch = *fmt++;  fl_len = 1;   break;
+  71   3          }   
+  72   2      
+  73   2          //----- Get Type Discriptor -----
+  74   2          
+  75   2          switch( ch ) {
+  76   3      
+  77   3            case 'd':
+  78   3            case 'u':
+  79   3      
+  80   3              switch (fl_len) {
+  81   4              case 1:
+  82   4                if( ch=='d' ) value = (char)va_arg( ap, char );
+  83   4                else          value = (BYTE)va_arg( ap, BYTE );
+  84   4                break;
+  85   4      
+  86   4              case 2:
+  87   4                if( ch=='d' ) value = (int)va_arg( ap,  int );
+  88   4                else          value = (uint16)va_arg( ap, uint16 );
+  89   4                break;
+  90   4      
+  91   4              case 4:
+  92   4                if( ch=='d' ) value = (long)va_arg( ap, long );
+  93   4                else          value = (uint32)va_arg( ap, uint32 );
+  94   4                break;
+  95   4              }
+  96   3      
+  97   3              if( value<0 ) {
+  98   4                _outchar('-');
+  99   4                value = value*(-1);
+ 100   4              }
+ 101   3      
+ 102   3              if(cnt==0) {
+ 103   4                if( value==0 ) { _outchar('0'); continue; }
+ 104   4      
+ 105   4                for(cnt=0, mask=1; cnt<10; cnt++) {
+ 106   5                  if( (value/mask)==0 ) break;
+ 107   5                  mask = mask*10;
+ 108   5                }
+ 109   4              }
+ 110   3      
+ 111   3              for(i=0, mask=1; i<cnt-1; i++) mask = mask*10;
+ 112   3      
+ 113   3              while(1) {
+ 114   4                ch = (value / mask) + '0';
+ 115   4                if( ch=='0' && fl_zero==0 && mask!=1 ) ch=' ';
+ 116   4                else fl_zero = 1;
+C51 COMPILER V9.56.0.0   PRINTF                                                            12/17/2017 17:53:42 PAGE 3   
+
+ 117   4                _outchar(ch);
+ 118   4      
+ 119   4                value = value % (mask);
+ 120   4                mask = mask / 10;
+ 121   4                
+ 122   4                if( mask==0 )
+ 123   4                  break;
+ 124   4              }
+ 125   3              continue;
+ 126   3      
+ 127   3            case 'x':
+ 128   3            case 'X':
+ 129   3      
+ 130   3              switch (fl_len) {
+ 131   4              case 1: value = (BYTE)va_arg( ap, BYTE );   break;
+ 132   4              case 2: value = (uint16)va_arg( ap, uint16 );   break;
+ 133   4              case 4: value = (uint32)va_arg( ap, uint32 );   break;
+ 134   4              }
+ 135   3      
+ 136   3              if(cnt==0) cnt = fl_len*2;
+ 137   3      
+ 138   3              for(i=0; i<cnt; i++) {
+ 139   4                _outchar( Hex[(value >> (cnt-i-1)*4) & 0x000f] );
+ 140   4              }
+ 141   3              continue;
+ 142   3      
+ 143   3            case 's':
+ 144   3      
+ 145   3              ptr = (char *)va_arg( ap, char* );
+ 146   3              while(*ptr!='\0')
+ 147   3                _outchar(*ptr++);
+ 148   3              continue;
+ 149   3      
+ 150   3            case 'c':
+ 151   3              value = va_arg( ap, char );
+ 152   3                _outchar((BYTE)value);
+ 153   3              continue;
+ 154   3      
+ 155   3            default:
+ 156   3              value = (WORD)va_arg( ap, int );
+ 157   3              continue;
+ 158   3          }
+ 159   2        }
+ 160   1      }
+ 161          
+ 162          void Printf( const char *fmt, ... )
+ 163          {
+ 164   1        XDATA va_list ap;
+ 165   1      
+ 166   1        _nop_ ();
+ 167   1        va_start(ap, fmt);
+ 168   1        DoPrint( fmt, ap );
+ 169   1        va_end( ap );
+ 170   1      }
+ 171          
+ 172          void Puts( char *ptr )
+ 173          {
+ 174   1        while(*ptr!='\0')
+ 175   1          RS_tx(*ptr++);
+ 176   1      }
+ 177          
+ 178          
+C51 COMPILER V9.56.0.0   PRINTF                                                            12/17/2017 17:53:42 PAGE 4   
+
+ 179          
+ 180          
+ 181          #ifdef DEBUG
+ 182          
+ 183          /*
+ 184          void dPrintf( const char *fmt, ... )
+ 185          {
+ 186            XDATA va_list ap;
+ 187          
+ 188            if( DebugLevel >= DEBUG_INFO ) {
+ 189              va_start(ap, fmt);
+ 190              DoPrint( fmt, ap );
+ 191              va_end( ap );
+ 192            }
+ 193          }
+ 194          
+ 195          
+ 196          */
+ 197          /*
+ 198          void wPrintf( const char *fmt, ... )
+ 199          {
+ 200            va_list ap;
+ 201          
+ 202            if( DebugLevel >= DEBUG_WARN ) {
+ 203              va_start(ap, fmt);
+ 204              DoPrint( fmt, ap );
+ 205              va_end( ap );
+ 206            }
+ 207          }
+ 208          */
+ 209          /*
+ 210          void ePrintf( const char *fmt, ... )
+ 211          {
+ 212            va_list ap;
+ 213          
+ 214            if( DebugLevel >= DEBUG_ERR ) {
+ 215              va_start(ap, fmt);
+ 216              DoPrint( fmt, ap );
+ 217              va_end( ap );
+ 218            }
+ 219          }
+ 220          */
+ 221          //=============================================================================
+ 222          //                                                                           
+ 223          //=============================================================================
+ 224          
+ 225          /*
+ 226          void dPuts( char *ptr )
+ 227          {
+ 228            if( DebugLevel >= DEBUG_INFO ) {
+ 229              while(*ptr!='\0')
+ 230                RS_tx(*ptr++);
+ 231            }
+ 232          }
+ 233          */
+ 234          /*
+ 235          void wPuts( char *ptr )
+ 236          {
+ 237            if( DebugLevel >= DEBUG_WARN ) {
+ 238              while(*ptr!='\0')
+ 239                RS_tx(*ptr++);
+ 240            }
+C51 COMPILER V9.56.0.0   PRINTF                                                            12/17/2017 17:53:42 PAGE 5   
+
+ 241          }
+ 242          */
+ 243          /*
+ 244          void ePuts( char *ptr )
+ 245          {
+ 246            if( DebugLevel >= DEBUG_ERR ) {
+ 247              while(*ptr!='\0')
+ 248                RS_tx(*ptr++);
+ 249            }
+ 250          }
+ 251          */
+ 252          #endif // DEBUG
+ 253          
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =   1470    ----
+   CONSTANT SIZE    =     17    ----
+   XDATA SIZE       =   ----      70
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =   ----    ----
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =   ----       2
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

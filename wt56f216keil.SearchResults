@@ -1,0 +1,11 @@
+---- Pwm0Counter Matches (12 in 2 files) ----
+Ctrl.c:WORD Pwm0Counter=0;
+Ctrl.c:	//Pwm0Counter = 1199;
+Ctrl.c:	DutyTotal = Pwm0Counter * DutyTotal;
+Ctrl.c:	Pwm0Counter = PWM_PRE_30KHZ;
+Ctrl.c:	rPWM0_PRDH = Pwm0Counter / 256;      
+Ctrl.c: 	rPWM0_PRDL = Pwm0Counter % 256;      
+Ctrl.c:	//Pwm0Counter = Pwm0Counter - Pwm0Counter;
+Ctrl.c:	rPWM0_DUTYH = (WORD)((Pwm0Counter/2) / 256);
+Ctrl.c:	rPWM0_DUTYL = (WORD)((Pwm0Counter/2) % 256); 
+Ctrl.h:extern WORD Pwm0Counter;

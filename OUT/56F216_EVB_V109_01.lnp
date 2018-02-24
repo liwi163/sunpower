@@ -1,0 +1,8 @@
+".\OUT\interrupt.obj",
+".\OUT\main.obj",
+".\OUT\REG_WT56F216_MemAlloc.obj",
+".\OUT\startup.obj" 
+TO ".\OUT\56F216_EVB_V109_01" 
+PRINT(".\LST\56F216_EVB_V109_01.m51") RAMSIZE(256) 
+CODE( 0X0000-0X3FFF )
+XDATA( 0X0100-0X017F )

@@ -1,0 +1,12 @@
+".\Objects\interrupt.obj",
+".\Objects\main.obj",
+".\Objects\REG_WT56F216_MemAlloc.obj",
+".\Objects\startup.obj",
+".\Objects\mcu.obj",
+".\Objects\Printf.obj",
+".\Objects\key.obj",
+".\Objects\ctrl.obj",
+".\Objects\Lcd.obj" 
+TO ".\Objects\WT56F216_Keil" 
+PRINT(".\Listings\WT56F216_Keil.m51") CODE( 0X0000-0X3FFF )
+XDATA( 0X0100-0X017F )

@@ -1,0 +1,1006 @@
+A51 MACRO ASSEMBLER  STARTUP                                                              10/28/2017 10:50:36 PAGE     1
+
+
+MACRO ASSEMBLER A51 V8.2.5.0
+OBJECT MODULE PLACED IN .\OUT\startup.obj
+ASSEMBLER INVOKED BY: C:\Keil_v5\C51\BIN\A51.EXE code\startup.a51 SET(SMALL) DEBUG PRINT(.\LST\startup.lst) OBJECT(.\OUT
+                      \startup.obj) EP
+
+LOC  OBJ            LINE     SOURCE
+
+                       1     $nomod51 
+
+                       2     ;------------------------------------------------------------------------------
+
+                       3     ; This startup.A51 is for WT56F216 [ ICE-Driver: WT56F216_AGDI.DLL ver 1.1.2.0]
+
+                       4     ;------------------------------------------------------------------------------
+
+                       5     ; Version: 1.05 >>@2012-12-03, clear idata 0xFE~0x00
+
+                       6     ; Version: 1.04 >>@2012-08-15, enable LVD & LVDR, to stable consumption current
+
+                       7     ; Version: 1.03 >>@2012-06-13, set XFR_0x73.bit7 for iRC_12M function
+
+                       8     ; Version: 1.02 >>@2012-04-12, modified EXF2 for ICE function
+
+                       9     ; Version: 1.01 >>@2012-03-22, corrected XFR issue
+
+                      10     
+
+                      11     ;------------------------------------------------------------------------------
+
+                      12     ;  This file is part of the C51 Compiler package
+
+                      13     ;  Copyright (c) 1988-2002 Keil Elektronik GmbH and Keil Software, Inc.
+
+                      14     ;------------------------------------------------------------------------------
+
+                      15     ;  STARTUP.A51:  This code is executed after processor reset.
+
+                      16     ;
+
+                      17     ;  To translate this file use A51 with the following invocation:
+
+                      18     ;
+
+                      19     ;     A51 STARTUP.A51
+
+                      20     ;
+
+                      21     ;  To link the modified STARTUP.OBJ file to your application use the following
+
+                      22     ;  BL51 invocation:
+
+                      23     ;
+
+                      24     ;     BL51 <your object file list>, STARTUP.OBJ <controls>
+
+                      25     ;
+
+                      26     ;------------------------------------------------------------------------------
+
+                      27     ;
+
+                      28     ;  User-defined Power-On Initialization of Memory
+
+                      29     ;
+
+                      30     ;  With the following EQU statements the initialization of memory
+
+                      31     ;  at processor reset can be defined:
+
+                      32     ;
+
+                      33     ;               ; the absolute start-address of IDATA memory is always 0
+
+  00FF                34     IDATALEN        EQU     0FFH     ; the length of IDATA memory in bytes.
+
+                      35     ;
+
+  0100                36     XDATASTART      EQU     0100H    ; the absolute start-address of XDATA memory
+
+  0100                37     XDATALEN        EQU     100H     ; the length of XDATA memory in bytes.
+
+                      38     ;
+
+  0000                39     PDATASTART      EQU     0H      ; the absolute start-address of PDATA memory
+
+  0000                40     PDATALEN        EQU     0H      ; the length of PDATA memory in bytes.
+
+                      41     ;
+
+                      42     ;  Notes:  The IDATA space overlaps physically the DATA and BIT areas of the
+
+                      43     ;          8051 CPU. At minimum the memory space occupied from the C51
+
+                      44     ;          run-time routines must be set to zero.
+
+                      45     ;------------------------------------------------------------------------------
+
+                      46     ;
+
+                      47     ;  Reentrant Stack Initilization
+
+                      48     ;
+
+                      49     ;  The following EQU statements define the stack pointer for reentrant
+
+                      50     ;  functions and initialized it:
+
+                      51     ;
+
+                      52     ;  Stack Space for reentrant functions in the SMALL model.
+
+  0000                53     IBPSTACK        EQU     0       ; set to 1 if small reentrant is used.
+
+  0100                54     IBPSTACKTOP     EQU     0FFH+1  ; set top of stack to highest location+1.
+
+                      55     ;
+
+                      56     ;  Stack Space for reentrant functions in the LARGE model.
+
+  0000                57     XBPSTACK        EQU     0       ; set to 1 if large reentrant is used.
+
+A51 MACRO ASSEMBLER  STARTUP                                                              10/28/2017 10:50:36 PAGE     2
+
+  0000                58     XBPSTACKTOP     EQU     0FFFFH+1; set top of stack to highest location+1.
+
+                      59     ;
+
+                      60     ;  Stack Space for reentrant functions in the COMPACT model.
+
+  0000                61     PBPSTACK        EQU     0       ; set to 1 if compact reentrant is used.
+
+  0000                62     PBPSTACKTOP     EQU     0FFFFH+1; set top of stack to highest location+1.
+
+                      63     ;
+
+                      64     ;------------------------------------------------------------------------------
+
+                      65     ;
+
+                      66     ;  Page Definition for Using the Compact Model with 64 KByte xdata RAM
+
+                      67     ;
+
+                      68     ;  The following EQU statements define the xdata page used for pdata
+
+                      69     ;  variables. The EQU PPAGE must conform with the PPAGE control used
+
+                      70     ;  in the linker invocation.
+
+                      71     ;
+
+  0000                72     PPAGEENABLE     EQU     0       ; set to 1 if pdata object are used.
+
+                      73     ;
+
+  0000                74     PPAGE           EQU     0       ; define PPAGE number.
+
+                      75     ;
+
+  00A0                76     PPAGE_SFR       DATA    0A0H    ; SFR that supplies uppermost address byte
+
+                      77     ;               (most 8051 variants use P2 as uppermost address byte)
+
+                      78     ;
+
+                      79     ;------------------------------------------------------------------------------
+
+  0001                80     ICE_ENABLE      EQU     1       ; [0/1] disable / Enalbe ICE function
+
+                      81     ;------------------------------------------------------------------------------
+
+                      82     ; Standard SFR Symbols
+
+  00E0                83     ACC         DATA    0E0H
+
+  00F0                84     B           DATA    0F0H
+
+  0081                85     SP          DATA    81H
+
+  0082                86     DPL         DATA    82H
+
+  0083                87     DPH         DATA    83H
+
+  0088                88     TCON        DATA    88H
+
+  00A0                89     P2          data    0A0H
+
+  00A8                90     IE          DATA    0A8H
+
+  00D0                91     PSW         DATA    0D0H
+
+  00B8                92     IP          DATA    0B8H
+
+  00FD                93     ICE_PCL     DATA    0FDH
+
+  00F5                94     ICE_PCH     DATA    0F5H
+
+  00FC                95     ICE_ISRL    DATA    0FCH
+
+  00F4                96     ICE_ISRH    DATA    0F4H
+
+  00FA                97     PCL_STACK   DATA    0FAh
+
+  00F2                98     PCH_STACK   DATA    0F2h
+
+  00F8                99     ICE_CTL     DATA    0F8H
+
+  00F9               100     ICE_DAT     DATA    0F9H
+
+                     101     ;
+
+                     102     ;T2CON          EQU    C8H
+
+  00C8               103     sfr T2CON   = 0xC8;
+
+  0002               104     LVD_CTL         EQU 02H
+
+  0005               105     SYS_CTL1        EQU 05H
+
+  0078               106     WD_TIMER        EQU 78H
+
+  0073               107     RC_CALIB_EN     EQU 73H
+
+                     108     ;
+
+                     109     IF ICE_ENABLE <> 0
+
+                     110     ; ICE Status bits
+
+  0007               111     FB              EQU 07H
+
+  0006               112     RD              EQU 06H
+
+  0005               113     WR              EQU 05H
+
+  0004               114     EXIT            EQU 04H
+
+  0003               115     RY              EQU 03H
+
+  0002               116     ENTICE          EQU 02H
+
+                     117     ; ICE routine start-address
+
+  1000               118     ICE_ISR_STRAT   EQU 1000H
+
+                     119     ENDIF
+
+                     120     
+
+                     121                     NAME    ?C_STARTUP
+
+                     122     ?C_C51STARTUP   SEGMENT   CODE
+
+                     123     ?STACK          SEGMENT   IDATA
+
+A51 MACRO ASSEMBLER  STARTUP                                                              10/28/2017 10:50:36 PAGE     3
+
+                     124     
+
+----                 125                     RSEG    ?STACK
+
+0000                 126                     DS      1
+
+                     127     
+
+                     128                     EXTRN CODE (?C_START)
+
+                     129                     PUBLIC  ?C_STARTUP
+
+                     130     
+
+----                 131                     CSEG    AT 00H
+
+0000                 132     ?C_STARTUP:
+
+0000 020000   F      133                     LJMP    STARTUP1
+
+                     134                     ;CSEG    AT 7BH
+
+                     135                     ;LJMP    ICE_ROUTINE
+
+                     136                     
+
+----                 137                     RSEG    ?C_C51STARTUP
+
+0000                 138     STARTUP1:
+
+0000 9000DA          139                   MOV     DPTR,#0DAh
+
+0003 E0              140                     MOVX    A,@DPTR
+
+                     141     
+
+0004 75A000          142                     MOV     P2,#00H
+
+0007 75FC00          143                     MOV     ICE_ISRL,#00H
+
+000A 75F410          144                     MOV     ICE_ISRH,#10H
+
+                     145     
+
+                     146                     ;Init System Clock
+
+000D 900005          147                     MOV     DPTR,#SYS_CTL1
+
+0010 E0              148                     MOVX    A,@DPTR
+
+0011 54A0            149                     ANL     A,#10100000B        ; IRC 12Mhz
+
+0013 F0              150                     MOVX    @DPTR,A
+
+                     151     
+
+                     152                   ;iRC_12M calibration enalbe 
+
+0014 7480            153                   MOV           A,#10000000B                ; enable bit7::RC_Calib_en
+
+0016 900073          154                   MOV           DPTR,#RC_CALIB_EN
+
+0019 F0              155                   MOVX    @DPTR,A   
+
+                     156             
+
+                     157                   ;enalbe LVD & LVDR
+
+001A 7400            158                   MOV           A,#00000000B                ; enable LVD[2.0V] & LVDR[2.0V]
+
+001C 900002          159                   MOV           DPTR,#LVD_CTL
+
+001F F0              160                     MOVX    @DPTR,A 
+
+                     161                             
+
+                     162     
+
+                     163                     ;WatchDog
+
+                     164                     ;;MOV     DPTR,#WD_TIMER      ;Stop WatchDog
+
+                     165                     ;;MOV     A,#80H
+
+                     166                     ;;MOVX    @DPTR,A
+
+                     167                     ;stack point
+
+0020 758100   F      168                     MOV     SP,#?STACK-1
+
+                     169     
+
+                     170     IF IDATALEN <> 0
+
+0023 78FE            171                     MOV     R0,#IDATALEN - 1
+
+0025 E4              172                     CLR     A
+
+0026 F6              173     IDATALOOP:      MOV     @R0,A
+
+0027 D8FD            174                     DJNZ    R0,IDATALOOP
+
+                     175     ENDIF
+
+                     176     
+
+                     177     IF XDATALEN <> 0
+
+0029 900100          178                     MOV     DPTR,#XDATASTART
+
+002C 7F00            179                     MOV     R7,#LOW (XDATALEN)
+
+                     180       IF (LOW (XDATALEN)) <> 0
+
+                                             MOV     R6,#(HIGH (XDATALEN)) +1
+
+                               ELSE
+
+002E 7E01            183                     MOV     R6,#HIGH (XDATALEN)
+
+                     184       ENDIF
+
+0030 E4              185                     CLR     A
+
+0031 F0              186     XDATALOOP:      MOVX    @DPTR,A
+
+0032 A3              187                     INC     DPTR
+
+0033 DFFC            188                     DJNZ    R7,XDATALOOP
+
+0035 DEFA            189                     DJNZ    R6,XDATALOOP
+
+A51 MACRO ASSEMBLER  STARTUP                                                              10/28/2017 10:50:36 PAGE     4
+
+                     190     ENDIF
+
+                     191     
+
+                     192     IF PPAGEENABLE <> 0
+
+                                             MOV     PPAGE_SFR,#PPAGE
+
+                             ENDIF
+
+                     195     
+
+                     196     IF PDATALEN <> 0
+
+                                             MOV     R0,#LOW (PDATASTART)
+
+                                             MOV     R7,#LOW (PDATALEN)
+
+                                             CLR     A
+
+                             PDATALOOP:      MOVX    @R0,A
+
+                                             INC     R0
+
+                                             DJNZ    R7,PDATALOOP
+
+                             ENDIF
+
+                     204     
+
+                     205     IF IBPSTACK <> 0
+
+                             EXTRN DATA (?C_IBP)
+
+                                             MOV     ?C_IBP,#LOW IBPSTACKTOP
+
+                             ENDIF
+
+                     209     
+
+                     210     IF XBPSTACK <> 0
+
+                             EXTRN DATA (?C_XBP)
+
+                                             MOV     ?C_XBP,#HIGH XBPSTACKTOP
+
+                                             MOV     ?C_XBP+1,#LOW XBPSTACKTOP
+
+                             ENDIF
+
+                     215     
+
+                     216     IF PBPSTACK <> 0
+
+                             EXTRN DATA (?C_PBP)
+
+                                             MOV     ?C_PBP,#LOW PBPSTACKTOP
+
+                             ENDIF
+
+0037 43B800          220                     ORL     IP,#00H
+
+003A 75A800          221                     MOV     IE,#00H
+
+003D 020000   F      222                     LJMP    ?C_START
+
+                     223     ;;====================================================================================
+
+                     224     IF ICE_ENABLE <> 0
+
+----                 225                     CSEG    AT ICE_ISR_STRAT
+
+1000                 226     ICE_ROUTINE:
+
+1000 00              227                     NOP
+
+1001 00              228                     NOP
+
+1002 C0E0            229                     PUSH    ACC
+
+1004 00              230                     NOP
+
+1005 C0F0            231                     PUSH    B
+
+1007 C083            232                     PUSH    DPH
+
+1009 C082            233                     PUSH    DPL
+
+100B C0D0            234                     PUSH    PSW
+
+100D C000            235                     PUSH    00H
+
+  0007               236     PUSHED_REG_SIZE EQU ($ - ICE_ROUTINE) / 2
+
+100F 75D000          237                     MOV     PSW,#00H                ; select register bank0
+
+                     238                     ;restore PCL
+
+1012 C3              239                     CLR      C
+
+1013 E5FD            240                     MOV      A,ICE_PCL
+
+1015 9401            241                     SUBB     A,#01
+
+1017 F5FA            242                     MOV      PCL_STACK,A 
+
+                     243                     ;restore PCH
+
+1019 E5F5            244                     MOV      A,ICE_PCH
+
+101B 9400            245                     SUBB     A,#00
+
+101D F5F2            246                     MOV      PCH_STACK,A               
+
+                     247                     ;Stop WatchDog
+
+101F 900078          248                     MOV     DPTR,#WD_TIMER
+
+1022 74A3            249                     MOV     A,#10100011B
+
+1024 F0              250                     MOVX    @DPTR,A
+
+                     251                     ; Set ICE READY
+
+1025 D2FB            252                     SETB    ICE_CTL.RY  
+
+                     253                     ; Wait for ICE Command   
+
+1027                 254                     main_loop:      
+
+                     255                     ; check FB & WR bits 
+
+A51 MACRO ASSEMBLER  STARTUP                                                              10/28/2017 10:50:36 PAGE     5
+
+1027 74A0            256                     MOV     A, #10100000b
+
+1029 55F8            257                     ANL     A, ICE_CTL
+
+102B B4A0F9          258                     CJNE    A, #10100000b, main_loop
+
+                     259     
+
+                     260                     ;decoder commands
+
+102E E5F9            261                     MOV     A, ICE_DAT
+
+1030 B40002          262                     cjne    A, #000h, ICE_command_is_not_00
+
+1033 01FC            263                     jmp     go_end
+
+                     264     
+
+1035                 265                     ICE_command_is_not_00: 
+
+1035 B40102          266                     cjne    A, #001h, ICE_command_is_not_01
+
+1038 8060            267                     jmp     do_command_01 
+
+                     268                     
+
+103A                 269                     ICE_command_is_not_01:  
+
+103A B40202          270                     cjne    A, #002h, ICE_command_is_not_02
+
+103D 806E            271                     jmp     do_command_02   
+
+                     272     
+
+103F                 273                     ICE_command_is_not_02:  
+
+103F B40302          274                     cjne    A, #003h, ICE_command_is_not_03
+
+1042 8072            275                     jmp     do_command_03 
+
+                     276                     
+
+1044                 277                     ICE_command_is_not_03:
+
+1044 B40402          278                     cjne    A, #004h, ICE_command_is_not_04
+
+1047 8079            279                     jmp     do_command_04 
+
+                     280                     
+
+1049                 281                     ICE_command_is_not_04:
+
+1049 B40502          282                     cjne    A, #005h, ICE_command_is_not_05
+
+104C 807D            283                     jmp     do_command_05
+
+                     284                     
+
+104E                 285                     ICE_command_is_not_05:
+
+104E B40602          286                     cjne    A, #006h, ICE_command_is_not_06
+
+1051 01D7            287                     jmp     do_command_06 
+
+                     288                     
+
+1053                 289                     ICE_command_is_not_06:
+
+1053 B40702          290                     cjne    A, #007h, ICE_command_is_not_07
+
+1056 01E8            291                     jmp     do_command_07 
+
+                     292                     
+
+1058                 293                     ICE_command_is_not_07:
+
+1058 B41602          294                     cjne    A, #016h, ICE_command_is_not_16
+
+105B 8007            295                     jmp     do_command_16   
+
+                     296                     
+
+105D                 297                     ICE_command_is_not_16:
+
+105D B41702          298                     cjne    A, #017h, ICE_command_is_not_17     
+
+1060 801C            299                     jmp     do_command_17   
+
+                     300                     
+
+1062                 301                     ICE_command_is_not_17:
+
+1062 80C3            302                     jmp     main_loop
+
+                     303                     
+
+                     304     ;;====================================================================================
+
+                     305                     ; Do commands   
+
+1064                 306                     do_command_16:
+
+                     307                     ; do block read XDATA
+
+1064 30FDFD          308                     jnb     ICE_CTL.WR, $
+
+1067 85F983          309                     MOV     DPH, ICE_DAT            ; set DPH
+
+106A 30FDFD          310                     jnb     ICE_CTL.WR, $
+
+106D 85F982          311                     MOV     DPL, ICE_DAT            ; set DPL 
+
+1070                 312                     do_command_16_call:                                     
+
+1070 E0              313                     MOVX    A, @DPTR
+
+1071 F5F9            314                     MOV     ICE_DAT, A
+
+1073 A3              315                     INC     DPTR
+
+1074                 316                     do_command_16_chk_rd:        
+
+1074 20FE02          317                     jb      ICE_CTL.RD, do_command_16_ckh_exit
+
+1077 80F7            318                     sjmp    do_command_16_call
+
+1079                 319                     do_command_16_ckh_exit:  
+
+1079 20FC1C          320                     jb      ICE_CTL.EXIT, do_command_exit 
+
+107C 80F6            321                     sjmp    do_command_16_chk_rd     
+
+A51 MACRO ASSEMBLER  STARTUP                                                              10/28/2017 10:50:36 PAGE     6
+
+                     322     
+
+107E                 323                     do_command_17:
+
+                     324                     ; do block write XDATA
+
+107E 30FDFD          325                     jnb     ICE_CTL.WR, $
+
+1081 85F983          326                     MOV     DPH, ICE_DAT            ; set DPH
+
+1084 30FDFD          327                     jnb     ICE_CTL.WR, $
+
+1087 85F982          328                     MOV     DPL, ICE_DAT            ; set DPL  
+
+108A                 329                     do_command_17_chk_wr:        
+
+108A 30FD06          330                     jnb     ICE_CTL.WR, do_command_17_chk_exit
+
+108D E5F9            331                     MOV     A, ICE_DAT
+
+108F F0              332                     MOVX    @DPTR, A
+
+1090 A3              333                     INC     DPTR
+
+1091 80F7            334                     sjmp    do_command_17_chk_wr
+
+1093                 335                     do_command_17_chk_exit:    
+
+1093 20FC02          336                     jb      ICE_CTL.EXIT, do_command_exit
+
+1096 80F2            337                     sjmp    do_command_17_chk_wr
+
+                     338                     
+
+1098                 339                     do_command_exit:
+
+1098 808D            340                     jmp     main_loop
+
+                     341             
+
+109A                 342                     do_command_01:
+
+                     343                     ; do read PDATA
+
+109A 30FDFD          344                     jnb     ICE_CTL.WR, $
+
+109D 85F983          345                     MOV     DPH, ICE_DAT            ; set DPH
+
+10A0 30FDFD          346                     jnb     ICE_CTL.WR, $
+
+10A3 85F982          347                     MOV     DPL, ICE_DAT            ; set DPL  
+
+10A6 7400            348                     MOV     A, #000h
+
+10A8 93              349                     MOVC    A, @A+DPTR                                            
+
+10A9 F5F9            350                     MOV     ICE_DAT, A
+
+10AB 0127            351                     jmp     main_loop                   
+
+                     352     
+
+10AD                 353                     do_command_02:
+
+                     354                     ; do read IDATA
+
+10AD 30FDFD          355                     jnb     ICE_CTL.WR, $
+
+10B0 A8F9            356                     MOV     R0, ICE_DAT
+
+10B2 86F9            357                     MOV     ICE_DAT, @R0
+
+10B4 0127            358                     jmp     main_loop        
+
+                     359     
+
+10B6                 360                     do_command_03:
+
+                     361                     ; do write IDATA
+
+10B6 30FDFD          362                     jnb     ICE_CTL.WR, $
+
+10B9 A8F9            363                     MOV     R0, ICE_DAT
+
+10BB 30FDFD          364                     jnb     ICE_CTL.WR, $
+
+10BE A6F9            365                     MOV     @R0, ICE_DAT
+
+10C0 0127            366                     jmp     main_loop                                
+
+                     367                     
+
+10C2                 368                     do_command_04:
+
+                     369                     ; do read SFR
+
+10C2 30FDFD          370                     jnb     ICE_CTL.WR, $
+
+10C5                 371                     e5_op_code:
+
+10C5 E5F9            372                     MOV     A, ICE_DAT              ; get E5 operand, e5_op_code_adr = 0x10C1
+
+10C7 F5F9            373                     MOV     ICE_DAT, A              ; get SFR data
+
+10C9 0127            374                     jmp     main_loop          
+
+                     375     
+
+10CB                 376                     do_command_05:
+
+                     377                     ; do write SFR
+
+10CB 30FDFD          378                     jnb     ICE_CTL.WR, $
+
+                     379                     
+
+10CE E5F9            380                     MOV     A, ICE_DAT              ; read data
+
+10D0 30FDFD          381                     jnb     ICE_CTL.WR, $        
+
+10D3                 382                     f5_op_code:
+
+10D3 F5F9            383                     MOV     ICE_DAT, A              ;get F5 operand, f5_op_code_adr = 0x10CF
+
+10D5 0127            384                     jmp     main_loop          
+
+                     385                     
+
+10D7                 386                     do_command_06:
+
+                     387                     ; do read XDATA
+
+A51 MACRO ASSEMBLER  STARTUP                                                              10/28/2017 10:50:36 PAGE     7
+
+10D7 30FDFD          388                     jnb     ICE_CTL.WR, $
+
+10DA 85F983          389                     MOV     DPH, ICE_DAT            ; set DPH
+
+10DD 30FDFD          390                     jnb     ICE_CTL.WR, $
+
+10E0 85F982          391                     MOV     DPL, ICE_DAT            ; set DPL  
+
+10E3 E0              392                     MOVX    A, @DPTR                                              
+
+10E4 F5F9            393                     MOV     ICE_DAT, A
+
+10E6 0127            394                     jmp     main_loop           
+
+                     395                     
+
+10E8                 396                     do_command_07:
+
+                     397                     ; do write XDATA
+
+10E8 30FDFD          398                     jnb     ICE_CTL.WR, $
+
+10EB 85F983          399                     MOV     DPH, ICE_DAT            ; set DPH
+
+10EE 30FDFD          400                     jnb     ICE_CTL.WR, $
+
+10F1 85F982          401                     MOV     DPL, ICE_DAT            ; set DPL  
+
+10F4 30FDFD          402                     jnb     ICE_CTL.WR, $
+
+10F7 E5F9            403                     MOV     A, ICE_DAT                                      
+
+10F9 F0              404                     MOVX    @DPTR, A
+
+10FA 0127            405                     jmp     main_loop           
+
+                     406                     
+
+10FC                 407                     go_end:
+
+10FC E588            408                     MOV     A,TCON
+
+10FE 5455            409                     ANL     A,#01010101B
+
+1100 F588            410                     MOV     TCON,A
+
+1102 C2FB            411                     CLR     ICE_CTL.RY
+
+                     412                     
+
+                     413                     ;;clear Timer 0, 1, 2 and Enhance Timer
+
+1104 53885F          414                     ANL     TCON ,#01011111B           ;Clear TF0,TF1
+
+1107 53C83F          415                     ANL     T2CON  ,#00111111B           ;Clear TF2
+
+110A 90007C          416                     mov     DPTR ,#007CH
+
+110D E0              417                     MOVX    A    ,@DPTR
+
+110E 4420            418                     ORL     A    ,#00100000B           ;Clear WTM Interrupt
+
+1110 F0              419                     MOVX    @DPTR,A
+
+1111 9000B2          420                     mov     DPTR ,#00B2H
+
+1114 E0              421                     MOVX    A    ,@DPTR
+
+1115 4410            422                     ORL     A    ,#00010000B           ;Clear ETM Interrupt
+
+1117 F0              423                     MOVX    @DPTR,A
+
+                     424                     
+
+                     425                     ;pop backup
+
+1118 D000            426                     POP     00H
+
+111A D0D0            427                     POP     PSW
+
+111C D082            428                     POP     DPL
+
+111E D083            429                     POP     DPH
+
+1120 D0F0            430                     POP     B
+
+1122 D0E0            431                     POP     ACC
+
+                     432     
+
+1124                 433     END_ICE_ROUTINE:
+
+1124 32              434                     RETI
+
+1125 00              435                     NOP
+
+1126 00              436                     NOP
+
+1127 00              437                     NOP
+
+1128 00              438                     NOP
+
+1129 00              439                     NOP
+
+                     440     ENDIF
+
+                     441     ;====================================================
+
+                     442     END
+
+A51 MACRO ASSEMBLER  STARTUP                                                              10/28/2017 10:50:36 PAGE     8
+
+SYMBOL TABLE LISTING
+------ ----- -------
+
+
+N A M E                 T Y P E  V A L U E   ATTRIBUTES
+
+?C_C51STARTUP. . . . .  C SEG    0040H       REL=UNIT
+?C_START . . . . . . .  C ADDR   -----       EXT
+?C_STARTUP . . . . . .  C ADDR   0000H   A   
+?STACK . . . . . . . .  I SEG    0001H       REL=UNIT
+ACC. . . . . . . . . .  D ADDR   00E0H   A   
+B. . . . . . . . . . .  D ADDR   00F0H   A   
+DO_COMMAND_01. . . . .  C ADDR   109AH   A   
+DO_COMMAND_02. . . . .  C ADDR   10ADH   A   
+DO_COMMAND_03. . . . .  C ADDR   10B6H   A   
+DO_COMMAND_04. . . . .  C ADDR   10C2H   A   
+DO_COMMAND_05. . . . .  C ADDR   10CBH   A   
+DO_COMMAND_06. . . . .  C ADDR   10D7H   A   
+DO_COMMAND_07. . . . .  C ADDR   10E8H   A   
+DO_COMMAND_16. . . . .  C ADDR   1064H   A   
+DO_COMMAND_16_CALL . .  C ADDR   1070H   A   
+DO_COMMAND_16_CHK_RD .  C ADDR   1074H   A   
+DO_COMMAND_16_CKH_EXIT  C ADDR   1079H   A   
+DO_COMMAND_17. . . . .  C ADDR   107EH   A   
+DO_COMMAND_17_CHK_EXIT  C ADDR   1093H   A   
+DO_COMMAND_17_CHK_WR .  C ADDR   108AH   A   
+DO_COMMAND_EXIT. . . .  C ADDR   1098H   A   
+DPH. . . . . . . . . .  D ADDR   0083H   A   
+DPL. . . . . . . . . .  D ADDR   0082H   A   
+E5_OP_CODE . . . . . .  C ADDR   10C5H   A   
+END_ICE_ROUTINE. . . .  C ADDR   1124H   A   
+ENTICE . . . . . . . .  N NUMB   0002H   A   
+EXIT . . . . . . . . .  N NUMB   0004H   A   
+F5_OP_CODE . . . . . .  C ADDR   10D3H   A   
+FB . . . . . . . . . .  N NUMB   0007H   A   
+GO_END . . . . . . . .  C ADDR   10FCH   A   
+IBPSTACK . . . . . . .  N NUMB   0000H   A   
+IBPSTACKTOP. . . . . .  N NUMB   0100H   A   
+ICE_COMMAND_IS_NOT_00.  C ADDR   1035H   A   
+ICE_COMMAND_IS_NOT_01.  C ADDR   103AH   A   
+ICE_COMMAND_IS_NOT_02.  C ADDR   103FH   A   
+ICE_COMMAND_IS_NOT_03.  C ADDR   1044H   A   
+ICE_COMMAND_IS_NOT_04.  C ADDR   1049H   A   
+ICE_COMMAND_IS_NOT_05.  C ADDR   104EH   A   
+ICE_COMMAND_IS_NOT_06.  C ADDR   1053H   A   
+ICE_COMMAND_IS_NOT_07.  C ADDR   1058H   A   
+ICE_COMMAND_IS_NOT_16.  C ADDR   105DH   A   
+ICE_COMMAND_IS_NOT_17.  C ADDR   1062H   A   
+ICE_CTL. . . . . . . .  D ADDR   00F8H   A   
+ICE_DAT. . . . . . . .  D ADDR   00F9H   A   
+ICE_ENABLE . . . . . .  N NUMB   0001H   A   
+ICE_ISRH . . . . . . .  D ADDR   00F4H   A   
+ICE_ISRL . . . . . . .  D ADDR   00FCH   A   
+ICE_ISR_STRAT. . . . .  N NUMB   1000H   A   
+ICE_PCH. . . . . . . .  D ADDR   00F5H   A   
+ICE_PCL. . . . . . . .  D ADDR   00FDH   A   
+ICE_ROUTINE. . . . . .  C ADDR   1000H   A   
+IDATALEN . . . . . . .  N NUMB   00FFH   A   
+IDATALOOP. . . . . . .  C ADDR   0026H   R   SEG=?C_C51STARTUP
+IE . . . . . . . . . .  D ADDR   00A8H   A   
+IP . . . . . . . . . .  D ADDR   00B8H   A   
+LVD_CTL. . . . . . . .  N NUMB   0002H   A   
+MAIN_LOOP. . . . . . .  C ADDR   1027H   A   
+P2 . . . . . . . . . .  D ADDR   00A0H   A   
+PBPSTACK . . . . . . .  N NUMB   0000H   A   
+PBPSTACKTOP. . . . . .  N NUMB   0000H   A   
+A51 MACRO ASSEMBLER  STARTUP                                                              10/28/2017 10:50:36 PAGE     9
+
+PCH_STACK. . . . . . .  D ADDR   00F2H   A   
+PCL_STACK. . . . . . .  D ADDR   00FAH   A   
+PDATALEN . . . . . . .  N NUMB   0000H   A   
+PDATASTART . . . . . .  N NUMB   0000H   A   
+PPAGE. . . . . . . . .  N NUMB   0000H   A   
+PPAGEENABLE. . . . . .  N NUMB   0000H   A   
+PPAGE_SFR. . . . . . .  D ADDR   00A0H   A   
+PSW. . . . . . . . . .  D ADDR   00D0H   A   
+PUSHED_REG_SIZE. . . .  N NUMB   0007H   A   
+RC_CALIB_EN. . . . . .  N NUMB   0073H   A   
+RD . . . . . . . . . .  N NUMB   0006H   A   
+RY . . . . . . . . . .  N NUMB   0003H   A   
+SP . . . . . . . . . .  D ADDR   0081H   A   
+STARTUP1 . . . . . . .  C ADDR   0000H   R   SEG=?C_C51STARTUP
+SYS_CTL1 . . . . . . .  N NUMB   0005H   A   
+T2CON. . . . . . . . .  D ADDR   00C8H   A   
+TCON . . . . . . . . .  D ADDR   0088H   A   
+WD_TIMER . . . . . . .  N NUMB   0078H   A   
+WR . . . . . . . . . .  N NUMB   0005H   A   
+XBPSTACK . . . . . . .  N NUMB   0000H   A   
+XBPSTACKTOP. . . . . .  N NUMB   0000H   A   
+XDATALEN . . . . . . .  N NUMB   0100H   A   
+XDATALOOP. . . . . . .  C ADDR   0031H   R   SEG=?C_C51STARTUP
+XDATASTART . . . . . .  N NUMB   0100H   A   
+
+
+REGISTER BANK(S) USED: 0 
+
+
+ASSEMBLY COMPLETE.  0 WARNING(S), 0 ERROR(S)

@@ -1,0 +1,150 @@
+C51 COMPILER V9.56.0.0   MAIN                                                              11/05/2017 17:09:37 PAGE 1   
+
+
+C51 COMPILER V9.56.0.0, COMPILATION OF MODULE MAIN
+OBJECT MODULE PLACED IN .\OUT\main.obj
+COMPILER INVOKED BY: C:\Keil_v5\C51\BIN\C51.EXE code\main.c OPTIMIZE(8,SPEED) BROWSE DEBUG OBJECTEXTEND PRINT(.\LST\main
+                    -.lst) TABS(2) OBJECT(.\OUT\main.obj)
+
+line level    source
+
+   1          #include "gheader.h"
+   2          
+   3          
+   4          /*
+   5          *************************************************************************
+   6          设计    liwei
+   7          文件    main
+   8          功能    全局变量定义区
+   9          *************************************************************************
+  10          */
+  11          
+  12          WORD tic_pc=0;
+  13          WORD tic_01=0;
+  14          
+  15          
+  16          
+  17          
+  18          /*
+  19          *************************************************************************
+  20          设计    liwei
+  21          文件    main
+  22          功能    主函数入口
+  23          *************************************************************************
+  24          */
+  25          
+  26          void main(void)
+  27          {
+  28   1        InitMcuReg();
+  29   1        InitMcuPort();
+  30   1        InitSysTimer();
+  31   1        InitUartPort();
+  32   1        Printf("\n\n\n");
+  33   1        Printf("\n********************************************************");
+  34   1        Printf("\nSi475x Microdigital Board - %s (%s)", __TIME__, __DATE__);
+  35   1        Printf("\n********************************************************");
+  36   1        Delay(1);
+  37   1      
+  38   1        ADC_Init();
+  39   1        KeyInit();
+  40   1      
+  41   1        LCDInit();
+  42   1      
+  43   1        while(1)
+  44   1        {
+  45   2          SysTimer();   
+  46   2          CtrKeyProc();
+  47   2        }
+  48   1        
+  49   1      }
+  50          
+  51          
+  52          
+  53          
+  54          
+C51 COMPILER V9.56.0.0   MAIN                                                              11/05/2017 17:09:37 PAGE 2   
+
+  55          
+  56          
+  57          
+  58          /*
+  59          *************************************************************************
+  60          设计    liwei
+  61          文件    Delay
+  62          功能    1ms延时
+  63          *************************************************************************
+  64          */
+  65          
+  66          void Delay(WORD  ms)                                                      
+  67          {                                                                                         
+  68   1        WORD i, j;                                                                             
+  69   1                                                                                                
+  70   1        for(i = 0; i < ms; i++)                                                           
+  71   1        {  
+  72   2        for(j = 0; j < 0x96; j++)                         
+  73   2          {                                                                                     
+  74   3              _nop_();                                                                                 
+  75   3              _nop_();                                                                            
+  76   3              _nop_();                                                                            
+  77   3              _nop_();                                                                            
+  78   3              _nop_();                                                                            
+  79   3        _nop_();                                                          
+  80   3              _nop_();                                                                            
+  81   3        _nop_();                                                          
+  82   3              _nop_();                                                                            
+  83   3        _nop_();                                                          
+  84   3              _nop_();                                                                            
+  85   3        _nop_();                                                          
+  86   3              _nop_();                                                                                           
+  87   3          }                                                                                     
+  88   2        }                                                                                       
+  89   1      } 
+  90          /*
+  91          *************************************************************************
+  92          设计    liwei
+  93          文件    Delay
+  94          功能    1ms延时
+  95          *************************************************************************
+  96          */
+  97          
+  98          void wait_us(u16 us)
+  99          {
+ 100   1        while(us--){
+ 101   2              _nop_();                                                                            
+ 102   2              _nop_();                                                                            
+ 103   2         //     _nop_();                                                                            
+ 104   2          //    _nop_();                                                                            
+ 105   2        }
+ 106   1      }
+ 107          
+ 108          
+ 109          /*
+ 110          *************************************************************************
+ 111          设计    liwei
+ 112          文件    Delay
+ 113          功能    1ms延时
+ 114          *************************************************************************
+ 115          */
+ 116          
+C51 COMPILER V9.56.0.0   MAIN                                                              11/05/2017 17:09:37 PAGE 3   
+
+ 117          void Delayms(uint16 Time)
+ 118          {
+ 119   1        tic_pc=0;
+ 120   1        do{;}while(tic_pc<Time);
+ 121   1      }
+ 122          
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =    165    ----
+   CONSTANT SIZE    =    120    ----
+   XDATA SIZE       =   ----    ----
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =      4    ----
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =   ----    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

@@ -1,0 +1,284 @@
+C51 COMPILER V9.56.0.0   CTRL                                                              12/17/2017 18:31:16 PAGE 1   
+
+
+C51 COMPILER V9.56.0.0, COMPILATION OF MODULE CTRL
+OBJECT MODULE PLACED IN .\Objects\ctrl.obj
+COMPILER INVOKED BY: E:\Keil\C51\BIN\C51.EXE code\ctrl.c LARGE OPTIMIZE(8,SPEED) BROWSE DEBUG OBJECTEXTEND PRINT(.\Listi
+                    -ngs\ctrl.lst) TABS(2) OBJECT(.\Objects\ctrl.obj)
+
+line level    source
+
+   1          #include "gheader.h"
+   2          
+   3          bit Flg_Power = 1;
+   4          
+   5          #define  downset    0
+   6          #define  upset        70
+   7          u8 Pwmset=downset;
+   8          
+   9          
+  10          #if ENABLE_PWM_MODE 
+  11          WORD PwmDutyTotal;
+  12          
+  13          
+  14          WORD Pwm0Counter=0;
+  15          
+  16          
+  17          
+  18          void API_AdjustPwm0Duty(BYTE DutyPercent)
+  19          {
+  20   1        float DutyTotal;
+  21   1        BYTE Pwm0DutyHi,Pwm0DutyLo;
+  22   1        //Pwm0Counter = 1199;
+  23   1        DutyTotal = (float)DutyPercent / 100;
+  24   1        DutyTotal = Pwm0Counter * DutyTotal;
+  25   1        PwmDutyTotal = DutyTotal;
+  26   1      
+  27   1        
+  28   1        Pwm0DutyHi = (BYTE)(PwmDutyTotal/256);
+  29   1        Pwm0DutyLo = (BYTE)(PwmDutyTotal%256);
+  30   1        rPWM0_DUTYH = Pwm0DutyHi;
+  31   1        rPWM0_DUTYL = Pwm0DutyLo; 
+  32   1      }
+  33          
+  34          
+  35          
+  36          void DRV_InitialPWM(void)
+  37          {
+  38   1        PWM0_PIN_OE = GPIO_OUTPUT_MODE;
+  39   1        GPF0_FUN_SLT_PWM0();
+  40   1      
+  41   1        //PWM1_PIN_OE = GPIO_OUTPUT_MODE;
+  42   1        //GPA7_FUN_SLT_PWM1();
+  43   1        
+  44   1            
+  45   1        //PWM0 = GPIOF0
+  46   1        //rPWM0_PRDH = PWM_PRE_1KHZ / 256;      
+  47   1        //rPWM0_PRDL = PWM_PRE_1KHZ % 256;      
+  48   1      
+  49   1          //PWM1 = GPIOA7
+  50   1        //rPWM1_PRDH = PWM_PRE_5KHZ / 256;       
+  51   1        //rPWM1_PRDL = PWM_PRE_5KHZ % 256;  
+  52   1        //Pwm0Duty = 50;  
+  53   1        Pwm0Counter = PWM_PRE_30KHZ;
+  54   1        rPWM0_PRDH = Pwm0Counter / 256;      
+C51 COMPILER V9.56.0.0   CTRL                                                              12/17/2017 18:31:16 PAGE 2   
+
+  55   1        rPWM0_PRDL = Pwm0Counter % 256;      
+  56   1      
+  57   1           
+  58   1        //Pwm0Counter = Pwm0Counter - Pwm0Counter;
+  59   1        rPWM0_DUTYH = (WORD)((Pwm0Counter/2) / 256);
+  60   1        rPWM0_DUTYL = (WORD)((Pwm0Counter/2) % 256); 
+  61   1        API_AdjustPwm0Duty(Pwmset);
+  62   1       
+  63   1      
+  64   1        //PWM1 = GPIOA7
+  65   1        //rPWM1_PRDH = 2048 / 256;       
+  66   1        //rPWM1_PRDL = 2048 % 256;   
+  67   1        //rPWM1_DUTYH = PWM_DUTY_50 / 256; 
+  68   1        //rPWM1_DUTYL = PWM_DUTY_50 % 256;
+  69   1      
+  70   1      
+  71   1      
+  72   1      
+  73   1      
+  74   1        rPWM_CTL = 0;
+  75   1        rPWM_CTL = ENABLE_PWM0;
+  76   1      
+  77   1      
+  78   1          //Enabel PWM0 & PWM1
+  79   1        //rPWM_CTL = (ENABLE_PWM1+ENABLE_PWM0);
+  80   1      }
+  81          
+  82          
+  83          
+  84          
+  85          
+  86          #endif  
+  87          
+  88          
+  89          
+  90          /*
+  91          ********************************************************************************
+  92          *   函 数 名: CtrKeyProc
+  93          *   功能描述: 完成按键的解码处理
+  94          *   输    入: 无
+  95          *   返    回: 无
+  96          ********************************************************************************
+  97          */
+  98          void CtrKeyProc(void)
+  99          {
+ 100   1        uint8 keycode;
+ 101   1        
+ 102   1      #if defined(EN_IRUSERCODE_MSG)
+                    MenuShowIRUserCode();
+                    return;
+              #endif
+ 106   1        if (!KeyHit())  return;
+ 107   1        keycode = KeyGetKey();
+ 108   1        
+ 109   1        //Printf("\r\nKeyIn ADC Value is: %bd", keycode );
+ 110   1      
+ 111   1      
+ 112   1      
+ 113   1        switch(keycode)
+ 114   1          {
+ 115   2          case KEYCODE_POWER:
+ 116   2            if ( Flg_KeyOnePress)   break;      // 不允许连击
+C51 COMPILER V9.56.0.0   CTRL                                                              12/17/2017 18:31:16 PAGE 3   
+
+ 117   2            Flg_KeyOnePress = 1;
+ 118   2            
+ 119   2            break;        
+ 120   2          }
+ 121   1      
+ 122   1        
+ 123   1        //if(!CtrlIsPowerOn())  return;
+ 124   1      
+ 125   1        switch (keycode)  
+ 126   1          {
+ 127   2          
+ 128   2        
+ 129   2          
+ 130   2            case KEYCODE_VOLUP:
+ 131   2              if ( Flg_KeyOnePress)   break;      
+ 132   2              Flg_KeyOnePress = 0;//允许连击
+ 133   2      
+ 134   2      
+ 135   2              //SysPar.Brightness=SysPar.Brightness+1;
+ 136   2              //ActiveSave_Brightness();
+ 137   2      
+ 138   2              if(Pwmset<upset)Pwmset++;
+ 139   2              if(Pwmset>upset)Pwmset=upset;
+ 140   2              Printf("\r\nKeyIn Pwm =%d",(u16)Pwmset);
+ 141   2              
+ 142   2               API_AdjustPwm0Duty(Pwmset);
+ 143   2               Puts("\nPASS KEYCODE_VOLUP");
+ 144   2              
+ 145   2              break;
+ 146   2            case KEYCODE_VOLDOWN:
+ 147   2              if ( Flg_KeyOnePress)   break;      
+ 148   2              Flg_KeyOnePress = 0;// 允许连击
+ 149   2      
+ 150   2              if(Pwmset>downset) Pwmset--;
+ 151   2              Printf("\r\nKeyIn Pwm =%d",(u16)Pwmset);
+ 152   2                
+ 153   2               API_AdjustPwm0Duty(Pwmset);
+ 154   2      
+ 155   2      
+ 156   2              Puts("\nPASS KEYCODE_VOLDOWN");
+ 157   2              break;
+ 158   2            case KEYCODE_MUTE:
+ 159   2              if ( Flg_KeyOnePress)   break;      // 不允许连击
+ 160   2              Flg_KeyOnePress = 1;
+ 161   2              
+ 162   2              
+ 163   2              Puts("\nPASS KEYCODE_MUTE");
+ 164   2              break;
+ 165   2        
+ 166   2        
+ 167   2          }
+ 168   1       }
+ 169          
+ 170          
+ 171           
+ 172           
+ 173           
+ 174           /*
+ 175           ********************************************************************************
+ 176           *   函 数 名: CtrKeyProc
+ 177           *   功能描述: 完成按键的解码处理
+ 178           *   输    入: 无
+C51 COMPILER V9.56.0.0   CTRL                                                              12/17/2017 18:31:16 PAGE 4   
+
+ 179           *   返    回: 无
+ 180           ********************************************************************************
+ 181           */
+ 182          
+ 183           bit CtrlIsPowerOn(void)
+ 184           {
+ 185   1      
+ 186   1         if (Flg_Power)  return 1;
+ 187   1         else return 0;
+ 188   1       }
+ 189          
+ 190           /*
+ 191           ********************************************************************************
+ 192           *   函 数 名: CtrKeyProc
+ 193           *   功能描述: 完成按键的解码处理
+ 194           *   输    入: 无
+ 195           *   返    回: 无
+ 196           ********************************************************************************
+ 197           */
+ 198          
+ 199           void CtrlPowerOnOff(void)
+ 200           {
+ 201   1         Flg_Power = ~Flg_Power;
+ 202   1       
+ 203   1       }
+ 204          
+ 205          /*
+ 206          ********************************************************************************
+ 207          *   函 数 名: CtrKeyProc
+ 208          *   功能描述: 完成按键的解码处理
+ 209          *   输    入: 无
+ 210          *   返    回: 无
+ 211          ********************************************************************************
+ 212          */
+ 213          
+ 214          void PowerOn(void)
+ 215          {
+ 216   1        ;
+ 217   1      }
+ 218          
+ 219          u16 ReadADC(u8 ch)
+ 220          {
+ 221   1       DATA u16 key_in;
+ 222   1      // DATA u32 temp;
+ 223   1      
+ 224   1        
+ 225   1        key_in=API_AverageADCData(ch);
+ 226   1        //Printf("\r\ key_in=%d ", (WORD)key_in);
+ 227   1      
+ 228   1        //v=5000;
+ 229   1        //j=4096;
+ 230   1      
+ 231   1        //temp=((u32)v)*((u32)key_in);
+ 232   1        //temp=temp/(u32)j;
+ 233   1        //Printf("\r\nKeyIn ADC [%bx]=   %d  Vl=%4x ", ch,(WORD)key_in, (u16)(temp>>8));
+ 234   1      
+ 235   1        #if 0
+                Printf("\r\nKeyIn ADC [%bx]=%d ", ch,(WORD)key_in);
+                #endif
+ 238   1        
+ 239   1        return key_in;
+ 240   1      }
+C51 COMPILER V9.56.0.0   CTRL                                                              12/17/2017 18:31:16 PAGE 5   
+
+ 241          
+ 242          
+ 243          
+ 244          
+ 245          void SetUSB1_Output(bit sw)
+ 246          {
+ 247   1        if(sw)
+ 248   1          USB_PowerSW=1;
+ 249   1        else
+ 250   1          USB_PowerSW=0;
+ 251   1      
+ 252   1      }
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =    360    ----
+   CONSTANT SIZE    =     77    ----
+   XDATA SIZE       =      5       4
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =   ----       2
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =      1       1
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)
