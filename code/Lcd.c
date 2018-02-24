@@ -748,7 +748,7 @@ void ShowQCicon(void)
 		}
 	else
 		{
-			ICON_T1=0;
+			ICON_T1=0;// aaaaaaaaaaaaa
 		}
 }
 
