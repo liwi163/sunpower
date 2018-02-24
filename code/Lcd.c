@@ -744,7 +744,7 @@ void ShowQCicon(void)
 {
 	if(usb1V>55)
 		{
-			ICON_T1=1;
+			ICON_T1=1; // liwei
 		}
 	else
 		{
